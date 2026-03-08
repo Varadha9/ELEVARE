@@ -1,6 +1,5 @@
 import re
 import nltk
-from transformers import pipeline
 from textblob import TextBlob
 import numpy as np
 
@@ -12,13 +11,6 @@ class NLPProcessor:
         except LookupError:
             nltk.download('punkt', quiet=True)
             nltk.download('stopwords', quiet=True)
-        
-        # Initialize models
-        self.emotion_classifier = pipeline(
-            "text-classification", 
-            model="j-hartmann/emotion-english-distilroberta-base",
-            top_k=None
-        )
         
         # Trait keywords mapping
         self.trait_keywords = {
@@ -58,13 +50,28 @@ class NLPProcessor:
         return keywords[:10]
     
     def detect_emotions(self, text):
-        """Detect emotions using transformer model"""
-        try:
-            results = self.emotion_classifier(text[:512])[0]
-            emotions = [{'emotion': r['label'], 'score': round(r['score'], 3)} for r in results]
-            return sorted(emotions, key=lambda x: x['score'], reverse=True)[:3]
-        except:
-            return [{'emotion': 'neutral', 'score': 1.0}]
+        """Detect emotions using simple keyword matching"""
+        emotions = {
+            'joy': ['happy', 'excited', 'great', 'wonderful', 'love', 'enjoy'],
+            'sadness': ['sad', 'unhappy', 'depressed', 'down', 'disappointed'],
+            'anger': ['angry', 'mad', 'frustrated', 'annoyed', 'irritated'],
+            'fear': ['afraid', 'scared', 'worried', 'anxious', 'nervous'],
+            'surprise': ['surprised', 'amazed', 'shocked', 'unexpected'],
+            'neutral': []
+        }
+        
+        text_lower = text.lower()
+        detected = []
+        
+        for emotion, keywords in emotions.items():
+            score = sum(1 for keyword in keywords if keyword in text_lower)
+            if score > 0:
+                detected.append({'emotion': emotion, 'score': min(score * 0.3, 1.0)})
+        
+        if not detected:
+            detected = [{'emotion': 'neutral', 'score': 1.0}]
+        
+        return sorted(detected, key=lambda x: x['score'], reverse=True)[:3]
     
     def analyze_sentiment(self, text):
         """Analyze sentiment polarity"""

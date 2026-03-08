@@ -1,9 +1,17 @@
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 
 class RecommendationEngine:
     def __init__(self, career_database):
         self.careers = career_database
+    
+    def cosine_similarity(self, vec1, vec2):
+        """Simple cosine similarity calculation"""
+        dot_product = np.dot(vec1, vec2)
+        norm1 = np.linalg.norm(vec1)
+        norm2 = np.linalg.norm(vec2)
+        if norm1 == 0 or norm2 == 0:
+            return 0
+        return dot_product / (norm1 * norm2)
         
     def calculate_trait_match(self, user_traits, career_traits):
         """Calculate similarity between user and career traits"""
@@ -15,7 +23,7 @@ class RecommendationEngine:
         career_vector = career_vector / 100
         
         # Calculate cosine similarity
-        similarity = cosine_similarity([user_vector], [career_vector])[0][0]
+        similarity = self.cosine_similarity(user_vector, career_vector)
         return similarity * 100
     
     def calculate_personality_match(self, user_personality, career_personality):
@@ -29,7 +37,7 @@ class RecommendationEngine:
         user_vector = user_vector / 100
         career_vector = career_vector / 100
         
-        similarity = cosine_similarity([user_vector], [career_vector])[0][0]
+        similarity = self.cosine_similarity(user_vector, career_vector)
         return similarity * 100
     
     def calculate_ikigai_score(self, user_ikigai, career_ikigai):

@@ -21,7 +21,7 @@ start "Frontend" cmd /k "cd frontend && npm run dev"
 
 echo.
 echo ========================================
-echo All services started!
+echo All Services Started!
 echo.
 echo MongoDB:     http://localhost:27017
 echo Backend:     http://localhost:5000
