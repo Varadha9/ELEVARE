@@ -1,0 +1,138 @@
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║   ███████╗██╗     ███████╗██╗   ██╗ █████╗ ██████╗ ███████╗             ║
+║   ██╔════╝██║     ██╔════╝██║   ██║██╔══██╗██╔══██╗██╔════╝             ║
+║   █████╗  ██║     █████╗  ██║   ██║███████║██████╔╝█████╗               ║
+║   ██╔══╝  ██║     ██╔══╝  ╚██╗ ██╔╝██╔══██║██╔══██╗██╔══╝               ║
+║   ███████╗███████╗███████╗ ╚████╔╝ ██║  ██║██║  ██║███████╗             ║
+║   ╚══════╝╚══════╝╚══════╝  ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝             ║
+║                                                                           ║
+║              AI-Driven Career Discovery & Personal Development           ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         🎯 PROJECT OVERVIEW                               │
+└───────────────────────────────────────────────────────────────────────────┘
+
+ELEVARE is a production-grade AI-powered career discovery platform that uses
+longitudinal behavioral analysis to provide personalized career recommendations.
+
+Unlike traditional career tests, ELEVARE interacts with users daily over 
+weeks/months to build comprehensive behavioral and personality profiles.
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         ✨ KEY FEATURES                                   │
+└───────────────────────────────────────────────────────────────────────────┘
+
+  🤖 Daily AI Conversations        📊 Behavioral Analysis
+  🧠 Personality Profiling         🎯 Ikigai Framework
+  💡 Career Recommendations        📈 Interactive Dashboard
+  🔐 Secure Authentication         🚀 Production Ready
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         🛠️ TECHNOLOGY STACK                               │
+└───────────────────────────────────────────────────────────────────────────┘
+
+  Frontend:  React 18 + Vite + TailwindCSS + Recharts
+  Backend:   Node.js + Express + MongoDB + JWT
+  AI:        Python + FastAPI + Transformers + Scikit-learn
+  NLP:       DistilRoBERTa + NLTK + TextBlob
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         ⚡ QUICK START                                    │
+└───────────────────────────────────────────────────────────────────────────┘
+
+  Windows Users:
+    1. Run: setup.bat
+    2. Run: start-all.bat
+    3. Open: http://localhost:3000
+
+  Manual Setup:
+    1. Install: Node.js 18+, Python 3.9+, MongoDB 6+
+    2. Setup Backend:    cd backend && npm install && npm run dev
+    3. Setup Frontend:   cd frontend && npm install && npm run dev
+    4. Setup AI:         cd ai-services && pip install -r requirements.txt && python main.py
+    5. Start MongoDB:    mongod --dbpath ./data/db
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         📚 DOCUMENTATION                                  │
+└───────────────────────────────────────────────────────────────────────────┘
+
+  📖 README.md              - Project overview
+  📋 PROJECT_INDEX.md       - Complete file index
+  📊 PROJECT_SUMMARY.md     - Comprehensive summary
+  
+  📁 docs/
+     ├── API.md             - API documentation
+     ├── ARCHITECTURE.md    - System design
+     ├── DEPLOYMENT.md      - Deployment guide
+     ├── RESEARCH_PAPER.md  - Academic paper outline
+     ├── FEATURES.md        - Feature list
+     └── DIAGRAMS.md        - Visual diagrams
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         🎓 USE CASES                                      │
+└───────────────────────────────────────────────────────────────────────────┘
+
+  ✅ Final Year Engineering Project
+  ✅ Research Paper & Publication
+  ✅ Startup MVP / Prototype
+  ✅ Portfolio Project
+  ✅ AI/ML Learning Project
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         📊 PROJECT STATISTICS                             │
+└───────────────────────────────────────────────────────────────────────────┘
+
+  Total Files:              60+
+  Lines of Code:            6,000+
+  Components:               50+
+  API Endpoints:            15+
+  AI Models:                3+
+  Documentation Pages:      100+
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         🏆 PROJECT HIGHLIGHTS                             │
+└───────────────────────────────────────────────────────────────────────────┘
+
+  ✅ Production-Quality Code       ✅ Comprehensive Documentation
+  ✅ Modern Architecture            ✅ Security Best Practices
+  ✅ Scalable Design                ✅ Research-Grade Quality
+  ✅ AI/ML Integration              ✅ Deployment Ready
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         🚀 NEXT STEPS                                     │
+└───────────────────────────────────────────────────────────────────────────┘
+
+  1. Read PROJECT_SUMMARY.md for complete overview
+  2. Run setup.bat to install dependencies
+  3. Configure backend/.env file
+  4. Run start-all.bat to launch all services
+  5. Access http://localhost:3000 and start exploring!
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         📞 SUPPORT                                        │
+└───────────────────────────────────────────────────────────────────────────┘
+
+  For detailed information, refer to:
+  - docs/ARCHITECTURE.md for system design
+  - docs/API.md for API reference
+  - docs/DEPLOYMENT.md for deployment instructions
+  - docs/FEATURES.md for complete feature list
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         📝 LICENSE                                        │
+└───────────────────────────────────────────────────────────────────────────┘
+
+  MIT License - Free for academic and commercial use
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║              🌟 ELEVARE - Building the Future of Career Discovery 🌟     ║
+║                                                                           ║
+║                    Production-Ready | Research-Grade | Scalable          ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
