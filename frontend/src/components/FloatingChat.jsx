@@ -20,7 +20,7 @@ export function FloatingChat() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-primary to-primary-600 rounded-full shadow-lg flex items-center justify-center text-white z-50"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-primary to-primary-600 rounded-full shadow-lg flex items-center justify-center text-white z-50 lg:bottom-8 lg:right-8"
       >
         {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
       </motion.button>
@@ -32,7 +32,7 @@ export function FloatingChat() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-24 right-6 w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50"
+            className="fixed bottom-24 right-6 w-full max-w-sm lg:w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50"
           >
             {/* Header */}
             <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-primary to-primary-600 rounded-t-2xl">

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -8,7 +7,6 @@ import {
   Target, 
   TrendingUp, 
   Settings,
-  Menu,
   X,
   Sparkles
 } from 'lucide-react';
@@ -17,50 +15,47 @@ import { cn } from '../../lib/utils';
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: MessageSquare, label: 'AI Reflection', path: '/reflection' },
-  { icon: User, label: 'Personality Profile', path: '/personality' },
-  { icon: Lightbulb, label: 'Career Insights', path: '/careers' },
-  { icon: Target, label: 'Ikigai Analysis', path: '/ikigai' },
-  { icon: TrendingUp, label: 'Progress Tracking', path: '/progress' },
+  { icon: User, label: 'Personality', path: '/personality' },
+  { icon: Lightbulb, label: 'Careers', path: '/careers' },
+  { icon: Target, label: 'Ikigai', path: '/ikigai' },
+  { icon: TrendingUp, label: 'Progress', path: '/progress' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
-export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
-
+export function Sidebar({ open, onClose }) {
   return (
     <>
       {/* Mobile Overlay */}
-      {!collapsed && (
+      {open && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setCollapsed(true)}
+          onClick={onClose}
         />
       )}
 
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 z-50",
-          collapsed ? "w-0 lg:w-20" : "w-64"
+          "fixed left-0 top-0 h-screen bg-white border-r border-gray-200 transition-transform duration-300 z-50",
+          "w-64 lg:w-20",
+          open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200">
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary-600 bg-clip-text text-transparent">
-                ELEVARE
-              </span>
+        <div className="h-16 flex items-center justify-between px-6 lg:px-4 border-b border-gray-200">
+          <div className="flex items-center gap-2 lg:justify-center lg:w-full">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
-          )}
+            <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary-600 bg-clip-text text-transparent lg:hidden">
+              ELEVARE
+            </span>
+          </div>
           <button
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
           >
-            {collapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -70,6 +65,7 @@ export function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={onClose}
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
@@ -77,21 +73,16 @@ export function Sidebar() {
                   isActive
                     ? "bg-primary text-white"
                     : "text-gray-700",
-                  collapsed && "justify-center"
+                  "lg:justify-center lg:px-2"
                 )
               }
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
-              {!collapsed && (
-                <span className="font-medium">{item.label}</span>
-              )}
+              <span className="font-medium lg:hidden">{item.label}</span>
             </NavLink>
           ))}
         </nav>
       </aside>
-
-      {/* Spacer */}
-      <div className={cn("transition-all duration-300", collapsed ? "w-0 lg:w-20" : "w-64")} />
     </>
   );
 }

@@ -74,7 +74,7 @@ export function Dashboard() {
         </motion.div>
 
         {/* Quick Actions */}
-        <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/reflection')}>
             <CardContent className="flex items-center gap-4 py-6">
               <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
@@ -113,7 +113,7 @@ export function Dashboard() {
         </motion.div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Personality Snapshot */}
           <motion.div variants={item}>
             <Card>
