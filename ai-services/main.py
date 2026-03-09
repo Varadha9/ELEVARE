@@ -79,11 +79,12 @@ async def process_message(request: ProcessMessageRequest):
             'updatedAt': None  # Will be set by MongoDB
         }
         
-        # Generate AI response
+        # Generate AI response with LLM
         response = conversational_agent.generate_response(
             request.message,
             analysis,
-            request.conversationHistory
+            request.conversationHistory,
+            user_profile  # Pass user profile for context
         )
         
         return {
