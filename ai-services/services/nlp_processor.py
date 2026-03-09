@@ -1,7 +1,6 @@
 import re
 import nltk
 from textblob import TextBlob
-import numpy as np
 
 class NLPProcessor:
     def __init__(self):

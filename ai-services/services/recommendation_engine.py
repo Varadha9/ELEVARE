@@ -1,41 +1,31 @@
-import numpy as np
-
 class RecommendationEngine:
     def __init__(self, career_database):
         self.careers = career_database
     
     def cosine_similarity(self, vec1, vec2):
         """Simple cosine similarity calculation"""
-        dot_product = np.dot(vec1, vec2)
-        norm1 = np.linalg.norm(vec1)
-        norm2 = np.linalg.norm(vec2)
+        dot_product = sum(a * b for a, b in zip(vec1, vec2))
+        norm1 = sum(a * a for a in vec1) ** 0.5
+        norm2 = sum(b * b for b in vec2) ** 0.5
         if norm1 == 0 or norm2 == 0:
             return 0
         return dot_product / (norm1 * norm2)
         
     def calculate_trait_match(self, user_traits, career_traits):
         """Calculate similarity between user and career traits"""
-        user_vector = np.array([user_traits.get(trait, 50) for trait in career_traits.keys()])
-        career_vector = np.array(list(career_traits.values()))
+        user_vector = [user_traits.get(trait, 50) / 100 for trait in career_traits.keys()]
+        career_vector = [v / 100 for v in career_traits.values()]
         
-        # Normalize to 0-1 scale
-        user_vector = user_vector / 100
-        career_vector = career_vector / 100
-        
-        # Calculate cosine similarity
         similarity = self.cosine_similarity(user_vector, career_vector)
         return similarity * 100
     
     def calculate_personality_match(self, user_personality, career_personality):
         """Calculate Big Five personality fit"""
         if not career_personality:
-            return 50  # Neutral if no data
+            return 50
         
-        user_vector = np.array([user_personality.get(trait, 50) for trait in career_personality.keys()])
-        career_vector = np.array(list(career_personality.values()))
-        
-        user_vector = user_vector / 100
-        career_vector = career_vector / 100
+        user_vector = [user_personality.get(trait, 50) / 100 for trait in career_personality.keys()]
+        career_vector = [v / 100 for v in career_personality.values()]
         
         similarity = self.cosine_similarity(user_vector, career_vector)
         return similarity * 100
@@ -44,7 +34,6 @@ class RecommendationEngine:
         """Calculate Ikigai framework alignment"""
         scores = []
         
-        # Check overlap in each dimension
         for dimension in ['loves', 'goodAt', 'worldNeeds', 'paidFor']:
             user_items = set(user_ikigai.get(dimension, []))
             career_items = set(career_ikigai.get(dimension, []))
@@ -54,9 +43,9 @@ class RecommendationEngine:
                 total = len(user_items | career_items)
                 scores.append(overlap / total if total > 0 else 0)
             else:
-                scores.append(0.5)  # Neutral
+                scores.append(0.5)
         
-        return np.mean(scores) * 100
+        return (sum(scores) / len(scores)) * 100 if scores else 50
     
     def generate_recommendations(self, user_profile, top_n=5):
         """Generate career recommendations using hybrid approach"""
@@ -150,13 +139,12 @@ class RecommendationEngine:
     
     def update_from_feedback(self, user_id, career_title, interested, rating):
         """Update recommendation model based on user feedback"""
-        # In production, this would update ML model weights
-        # For now, we log the feedback for future training
+        from datetime import datetime
         feedback_data = {
             'user_id': user_id,
             'career': career_title,
             'interested': interested,
             'rating': rating,
-            'timestamp': np.datetime64('now')
+            'timestamp': datetime.now().isoformat()
         }
         return feedback_data
