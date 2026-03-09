@@ -93,8 +93,8 @@ export function Dashboard() {
                 <TrendingUp className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">7 Day Streak</h3>
-                <p className="text-sm text-gray-600">Keep it going!</p>
+                <h3 className="font-semibold text-lg">{profile?.stats?.streak || 0} Day Streak</h3>
+                <p className="text-sm text-gray-600">{profile?.stats?.streak > 0 ? 'Keep it going!' : 'Start your streak today!'}</p>
               </div>
             </CardContent>
           </Card>
@@ -105,8 +105,8 @@ export function Dashboard() {
                 <Target className="w-6 h-6 text-yellow-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">3 Careers Matched</h3>
-                <p className="text-sm text-gray-600">View insights</p>
+                <h3 className="font-semibold text-lg">{profile?.stats?.recommendationCount || 0} Careers Matched</h3>
+                <p className="text-sm text-gray-600">{profile?.stats?.recommendationCount > 0 ? 'View insights' : 'Complete reflections'}</p>
               </div>
             </CardContent>
           </Card>

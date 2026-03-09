@@ -1,12 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Moon, Sun, Bell, Lock, Trash2 } from 'lucide-react';
 
 export function Settings() {
-  const [darkMode, setDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+  const [notifications, setNotifications] = useState(() => localStorage.getItem('notifications') !== 'false');
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('darkMode', darkMode);
+  }, [darkMode]);
+
+  useEffect(() => {
+    localStorage.setItem('notifications', notifications);
+  }, [notifications]);
 
   return (
     <DashboardLayout title="Settings">

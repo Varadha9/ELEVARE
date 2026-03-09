@@ -43,6 +43,34 @@
   @apply bg-secondary-900 text-white;
 }
 
+.dark body {
+  @apply bg-secondary-900 text-gray-100;
+}
+
+.dark .bg-white {
+  @apply bg-secondary-800;
+}
+
+.dark .bg-gray-50 {
+  @apply bg-secondary-800;
+}
+
+.dark .bg-gray-100 {
+  @apply bg-secondary-700;
+}
+
+.dark .text-gray-600 {
+  @apply text-gray-400;
+}
+
+.dark .text-gray-900 {
+  @apply text-gray-100;
+}
+
+.dark .border-gray-200 {
+  @apply border-secondary-700;
+}
+
 .dark ::-webkit-scrollbar-track {
   @apply bg-secondary-900;
 }

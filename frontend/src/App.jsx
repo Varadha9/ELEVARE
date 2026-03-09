@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -10,13 +11,18 @@ import { Ikigai } from './pages/Ikigai';
 import { Progress } from './pages/ProgressTracking';
 import { Settings } from './pages/Settings';
 
-// Protected Route Component
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
 }
 
 function App() {
+  useEffect(() => {
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
   return (
     <AuthProvider>
       <Router>
