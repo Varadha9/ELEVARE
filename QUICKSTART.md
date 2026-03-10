@@ -15,7 +15,7 @@ This installs all dependencies (takes 5-10 minutes)
 
 ### Step 3: Start Application
 ```bash
-.\start-all.bat
+.\launch-elevare.bat
 ```
 This starts all services
 

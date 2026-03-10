@@ -49,7 +49,7 @@ echo Setup Complete!
 echo.
 echo Next Steps:
 echo 1. Configure backend/.env file
-echo 2. Run: start-all.bat
+echo 2. Run: launch-elevare.bat
 echo 3. Open: http://localhost:3000
 echo ========================================
 pause

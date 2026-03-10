@@ -47,6 +47,7 @@ export const sendMessage = async (req, res) => {
 
     res.json({
       conversationId: conversation._id,
+      aiResponse: response,
       message: response,
       analysis
     });

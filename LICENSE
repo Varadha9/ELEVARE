@@ -1,0 +1,88 @@
+MIT License
+
+Copyright (c) 2024 Varadha - ELEVARE Project
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Additional Terms for ELEVARE
+
+### Academic and Research Use
+This software is particularly encouraged for:
+- Educational purposes and learning
+- Academic research and publications
+- Student projects and dissertations
+- Open source contributions and improvements
+
+### Commercial Use
+Commercial use is permitted under the MIT license terms. However, we encourage:
+- Contributing improvements back to the open source project
+- Providing attribution in commercial applications
+- Supporting the open source community
+
+### Attribution
+When using ELEVARE in academic papers, presentations, or commercial products, 
+please consider citing:
+
+```
+ELEVARE: AI-Driven Career Discovery Platform
+Author: Varadha
+Year: 2024
+Repository: https://github.com/Varadha9/ELEVARE
+License: MIT
+```
+
+### Data and Privacy
+Users of this software are responsible for:
+- Complying with applicable data protection laws (GDPR, CCPA, etc.)
+- Implementing appropriate security measures
+- Obtaining necessary user consents
+- Protecting user privacy and personal information
+
+### Disclaimer
+The career recommendations and personality analysis provided by ELEVARE are 
+for informational and educational purposes only. They should not be considered 
+as professional career counseling or psychological assessment. Users should 
+consult with qualified professionals for important career and life decisions.
+
+### Third-Party Components
+This software includes components with their own licenses:
+- React (MIT License)
+- Node.js (MIT License)
+- Express.js (MIT License)
+- MongoDB (Server Side Public License)
+- Python (Python Software Foundation License)
+- FastAPI (MIT License)
+- NLTK (Apache License 2.0)
+- TailwindCSS (MIT License)
+
+### Support and Community
+While this software is provided "as is" without warranty, the community 
+provides support through:
+- GitHub Issues and Discussions
+- Documentation and guides
+- Community forums and chat
+- Open source contributions
+
+For questions about licensing or commercial use, contact: license@elevare.com
+
+---
+
+**Thank you for using ELEVARE and contributing to open source education technology!**
