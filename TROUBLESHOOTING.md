@@ -1,135 +1,271 @@
-# ELEVARE - Registration & Login Troubleshooting Guide
+# ELEVARE Troubleshooting Guide
 
-## Quick Fix Steps
+## 🚨 Common Issues and Solutions
 
-### 1. Start All Services
+### Issue: Services Not Starting
+
+**Problem**: MongoDB, Backend, or AI Services not responding
+**Error**: `ECONNREFUSED` or services not accessible
+
+**Solutions**:
+
+1. **Check MongoDB Installation**:
+   ```bash
+   # Run MongoDB setup
+   setup-mongodb.bat
+   
+   # Or install manually from:
+   # https://www.mongodb.com/try/download/community
+   ```
+
+2. **Check Dependencies**:
+   ```bash
+   # Run complete setup
+   setup.bat
+   
+   # Or install individually:
+   cd backend && npm install
+   cd frontend && npm install
+   cd ai-services && python -m venv venv && venv\Scripts\activate && pip install -r requirements.txt
+   ```
+
+3. **Check Ports**:
+   ```bash
+   # Check if ports are in use
+   netstat -an | findstr "3000 5000 8000 27017"
+   
+   # Kill processes if needed
+   taskkill /F /IM node.exe
+   taskkill /F /IM python.exe
+   taskkill /F /IM mongod.exe
+   ```
+
+### Issue: Frontend Shows Proxy Errors
+
+**Problem**: `http proxy error: /api/auth/login`
+**Cause**: Backend not running or not accessible
+
+**Solutions**:
+
+1. **Start Backend First**:
+   ```bash
+   cd backend
+   npm run dev
+   ```
+
+2. **Check Backend Health**:
+   ```bash
+   curl http://localhost:5000/health
+   ```
+
+3. **Verify Environment Variables**:
+   ```bash
+   # Check backend/.env
+   PORT=5000
+   MONGODB_URI=mongodb://localhost:27017/elevare
+   AI_SERVICE_URL=http://localhost:8000
+   ```
+
+### Issue: AI Services Not Responding
+
+**Problem**: AI service on port 8000 not accessible
+**Error**: Connection refused on port 8000
+
+**Solutions**:
+
+1. **Check Python Environment**:
+   ```bash
+   cd ai-services
+   venv\Scripts\activate
+   python main.py
+   ```
+
+2. **Install Missing Dependencies**:
+   ```bash
+   cd ai-services
+   venv\Scripts\activate
+   pip install -r requirements.txt
+   python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
+   ```
+
+3. **Check Python Version**:
+   ```bash
+   python --version
+   # Should be 3.9 or higher
+   ```
+
+### Issue: MongoDB Connection Failed
+
+**Problem**: Cannot connect to MongoDB
+**Error**: `MongoNetworkError` or connection timeout
+
+**Solutions**:
+
+1. **Start MongoDB Service**:
+   ```bash
+   # Local installation
+   mongod --dbpath ./data/db
+   
+   # Or Windows service
+   net start MongoDB
+   ```
+
+2. **Use Docker MongoDB**:
+   ```bash
+   docker run -d --name elevare-mongo -p 27017:27017 mongo:6
+   ```
+
+3. **Check MongoDB Status**:
+   ```bash
+   # Test connection
+   mongo --eval "db.adminCommand('ismaster')"
+   ```
+
+### Issue: Port Already in Use
+
+**Problem**: Port 3000, 5000, 8000, or 27017 already in use
+**Error**: `EADDRINUSE` or port binding failed
+
+**Solutions**:
+
+1. **Find and Kill Process**:
+   ```bash
+   # Find process using port
+   netstat -ano | findstr :5000
+   
+   # Kill process by PID
+   taskkill /F /PID <PID>
+   ```
+
+2. **Use Different Ports**:
+   ```bash
+   # Update .env files with different ports
+   # backend/.env
+   PORT=5001
+   
+   # Update frontend proxy configuration
+   ```
+
+### Issue: Dependencies Installation Failed
+
+**Problem**: npm install or pip install fails
+**Error**: Permission denied or network errors
+
+**Solutions**:
+
+1. **Clear Package Caches**:
+   ```bash
+   # Node.js
+   npm cache clean --force
+   
+   # Python
+   pip cache purge
+   ```
+
+2. **Run as Administrator**:
+   ```bash
+   # Right-click Command Prompt -> Run as Administrator
+   ```
+
+3. **Check Network/Firewall**:
+   ```bash
+   # Temporarily disable antivirus/firewall
+   # Check corporate proxy settings
+   ```
+
+### Issue: Virtual Environment Problems
+
+**Problem**: Python virtual environment not working
+**Error**: `venv\Scripts\activate` not found
+
+**Solutions**:
+
+1. **Recreate Virtual Environment**:
+   ```bash
+   cd ai-services
+   rmdir /s venv
+   python -m venv venv
+   venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+2. **Check Python Installation**:
+   ```bash
+   python --version
+   pip --version
+   ```
+
+## 🔧 Quick Fixes
+
+### Reset Everything
 ```bash
-# Run this command in the ELEVARE directory
-launch-elevare.bat
+# Stop all services
+taskkill /F /IM node.exe
+taskkill /F /IM python.exe
+taskkill /F /IM mongod.exe
+
+# Clean and reinstall
+rmdir /s backend\node_modules
+rmdir /s frontend\node_modules
+rmdir /s ai-services\venv
+
+# Run setup again
+setup.bat
 ```
 
-### 2. If Registration/Login Still Fails
-
-#### Check Service Status:
-- MongoDB: Should show "MongoDB Connected" in backend window
-- Backend: Should show "🚀 ELEVARE Backend running on port 5000"
-- AI Services: Should show "🤖 Starting ELEVARE AI Services..."
-- Frontend: Should show "Local: http://localhost:3000"
-
-#### Test Backend Directly:
+### Check System Health
 ```bash
-# Test health
-curl http://localhost:5000/health
-
-# Test registration
-curl -X POST http://localhost:5000/api/auth/register ^
-  -H "Content-Type: application/json" ^
-  -d "{\"name\":\"Test User\",\"email\":\"test@example.com\",\"password\":\"password123\",\"age\":25,\"education\":\"undergraduate\"}"
+# Run comprehensive health check
+health-check.bat
 ```
 
-### 3. Common Issues & Solutions
-
-#### Issue: "Network Error" or "Failed to fetch"
-**Solution:** 
-- Ensure backend is running on port 5000
-- Check CORS configuration
-- Try refreshing the page
-
-#### Issue: "User already exists"
-**Solution:**
-- Use a different email address
-- Or try logging in with existing credentials
-
-#### Issue: "Invalid credentials"
-**Solution:**
-- Check email and password spelling
-- Ensure password is at least 6 characters
-- Try registering a new account
-
-#### Issue: Frontend not loading
-**Solution:**
-- Check if port 3000 is available
-- Restart frontend: `cd frontend && npm run dev`
-- Clear browser cache
-
-### 4. Manual Service Start (if batch file fails)
-
-#### Terminal 1 - MongoDB:
+### Manual Service Start
 ```bash
+# Terminal 1: MongoDB
 mongod --dbpath ./data/db
+
+# Terminal 2: Backend
+cd backend && npm run dev
+
+# Terminal 3: AI Services
+cd ai-services && venv\Scripts\activate && python main.py
+
+# Terminal 4: Frontend
+cd frontend && npm run dev
 ```
 
-#### Terminal 2 - Backend:
+## 📞 Getting Help
+
+### Log Files
+- Backend logs: `backend/logs/`
+- AI service logs: Check terminal output
+- MongoDB logs: Check MongoDB installation directory
+
+### Debug Mode
 ```bash
+# Backend debug
 cd backend
-npm run dev
-```
+DEBUG=* npm run dev
 
-#### Terminal 3 - AI Services:
-```bash
+# AI services debug
 cd ai-services
-python main.py
+venv\Scripts\activate
+python main.py --log-level DEBUG
 ```
 
-#### Terminal 4 - Frontend:
-```bash
-cd frontend
-npm run dev
-```
+### Community Support
+- GitHub Issues: [Create Issue](https://github.com/Varadha9/ELEVARE/issues)
+- Documentation: Check `docs/` folder
+- Health Check: Run `health-check.bat`
 
-### 5. Test Registration Flow
+## 🚀 Performance Tips
 
-1. Open http://localhost:3000
-2. Click "Create Account"
-3. Fill in:
-   - Name: Your Full Name
-   - Email: your.email@example.com
-   - Password: minimum 6 characters
-   - Age: 18-100
-   - Education: Select from dropdown
-4. Click "Create Account"
-5. Should redirect to dashboard
+1. **Close Unused Applications**: Free up system resources
+2. **Restart Services**: If performance degrades
+3. **Clear Browser Cache**: For frontend issues
+4. **Update Dependencies**: Keep packages current
+5. **Check System Resources**: Ensure adequate RAM/CPU
 
-### 6. Test Login Flow
+---
 
-1. Open http://localhost:3000
-2. Click "Sign In" 
-3. Enter registered email and password
-4. Click "Sign In"
-5. Should redirect to dashboard
-
-### 7. Verify Real-Time Features
-
-After successful login:
-1. Go to Chat section
-2. Send a message like "I love coding and solving problems"
-3. AI should respond within 5-10 seconds
-4. Check Dashboard to see trait updates
-5. Generate recommendations after 5+ conversations
-
-## Success Indicators
-
-✓ All 4 service windows are open and running
-✓ Backend shows "MongoDB Connected"
-✓ Frontend loads at http://localhost:3000
-✓ Registration creates account successfully
-✓ Login redirects to dashboard
-✓ Chat responds with AI messages
-✓ Dashboard shows behavioral traits
-✓ Recommendations generate after conversations
-
-## Still Having Issues?
-
-1. Check Windows Firewall settings
-2. Ensure MongoDB is installed and accessible
-3. Verify Node.js and Python are in PATH
-4. Try running as Administrator
-5. Check antivirus software blocking connections
-
-## Contact Support
-
-If issues persist, provide:
-- Error messages from browser console (F12)
-- Error messages from service windows
-- Operating system version
-- Node.js and Python versions
+**Still having issues?** Run `health-check.bat` and create a GitHub issue with the output.
