@@ -44,7 +44,7 @@
 
 ### 🌟 **What Makes ELEVARE Special?**
 
-- 🤖 **Daily AI Conversations** - Natural, reflective dialogues that understand your interests
+- 🤖 **LLM-Powered Conversations** - Intelligent AI coach using Groq (Llama 3.3 70B) for natural, empathetic dialogues
 - 📊 **Longitudinal Analysis** - Tracks behavioral patterns over weeks/months, not minutes
 - 🧠 **Scientific Foundation** - Built on Big Five personality model and Ikigai framework
 - 🎯 **Explainable AI** - Transparent reasoning for every career recommendation
@@ -73,7 +73,7 @@
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| 🤖 **AI Conversations** | Natural daily interactions with intelligent career coach | ✅ **Live** |
+| 🤖 **LLM-Powered AI Coach** | Groq API (Llama 3.3 70B) for intelligent, context-aware conversations | ✅ **Live** |
 | 📊 **Behavioral Analysis** | 8 traits tracked: creativity, analytical thinking, leadership, etc. | ✅ **Live** |
 | 🧠 **Personality Profiling** | Big Five model (OCEAN) with detailed insights | ✅ **Live** |
 | 🎯 **Ikigai Mapping** | Four-dimensional career framework visualization | ✅ **Live** |
@@ -98,7 +98,7 @@
 | 🚀 **RESTful API** | Express.js backend | Scalable architecture |
 | 💾 **Database** | MongoDB with indexing | Fast, reliable data storage |
 | 🧪 **Production Ready** | Docker, CI/CD, monitoring | Enterprise-grade deployment |
-| 🔍 **AI Integration** | OpenAI GPT, Hugging Face | Advanced language understanding |
+| 🔍 **AI Integration** | Groq API (Llama 3.3 70B), NLTK, TextBlob | Advanced language understanding |
 | ⚡ **Performance** | Caching, optimization | <500ms response times |
 
 ---
@@ -419,7 +419,7 @@ Authorization: Bearer <token>
 |-------|--------------|----------|
 | **🎨 Frontend** | React 18, Vite, TailwindCSS, Recharts | Beautiful, responsive user interface |
 | **⚡ Backend** | Node.js, Express, JWT, Bcrypt | Secure, fast API services |
-| **🤖 AI Engine** | Python, FastAPI, NLTK, OpenAI | Intelligent conversation processing |
+| **🤖 AI Engine** | Python, FastAPI, Groq API, NLTK, TextBlob | Intelligent conversation processing |
 | **💾 Database** | MongoDB, Mongoose, Redis | Reliable data storage & caching |
 | **🚀 DevOps** | Docker, GitHub Actions, AWS | Production deployment & CI/CD |
 
@@ -463,8 +463,8 @@ Authorization: Bearer <token>
 - **🧠 NLTK** - Natural language processing
 - **💭 TextBlob** - Sentiment analysis
 - **🔢 NumPy** - Numerical computing
-- **🤖 OpenAI GPT** - Advanced language models
-- **🤗 Hugging Face** - Transformer models
+- **🤖 Groq API** - Llama 3.3 70B for intelligent conversations
+- **🤗 Hugging Face** - Transformer models (optional)
 - **📊 Pandas** - Data manipulation
 
 </details>
@@ -507,6 +507,7 @@ Authorization: Bearer <token>
 | Document | Description | Audience |
 |----------|-------------|----------|
 | 📋 **[Installation Guide](docs/INSTALLATION.md)** | Complete setup instructions | Developers, Users |
+| 🤖 **[LLM Integration Guide](docs/LLM_INTEGRATION.md)** | Groq API setup & testing | Developers |
 | 🔌 **[API Documentation](docs/API.md)** | RESTful API reference | Developers, Integrators |
 | 🏗️ **[Architecture Guide](docs/ARCHITECTURE.md)** | System design & components | Architects, Developers |
 | 🚀 **[Deployment Guide](docs/DEPLOYMENT.md)** | Production deployment | DevOps, System Admins |
@@ -628,6 +629,7 @@ NODE_ENV=development
 ```env
 MONGODB_URI=mongodb://localhost:27017/elevare
 AI_SERVICE_PORT=8000
+GROQ_API_KEY=your_groq_api_key_here
 ```
 
 ---
