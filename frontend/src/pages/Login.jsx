@@ -19,10 +19,27 @@ export function Login() {
     setLoading(true);
 
     try {
+      console.log('Attempting login with:', { email, password: '***' });
       await login({ email, password });
+      console.log('Login successful, navigating to dashboard');
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      console.error('Login error:', err);
+      
+      // Extract error message from different possible error formats
+      let errorMessage = 'Login failed. Please check your credentials.';
+      
+      if (err.message) {
+        errorMessage = err.message;
+      } else if (err.response?.data?.error?.message) {
+        errorMessage = err.response.data.error.message;
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -82,7 +99,14 @@ export function Login() {
                 className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700"
               >
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm">{error}</span>
+                <div className="flex-1">
+                  <span className="text-sm font-medium">{error}</span>
+                  {error.includes('Invalid email or password') && (
+                    <p className="text-xs mt-1 text-red-600">
+                      Make sure you're using the correct email and password you registered with.
+                    </p>
+                  )}
+                </div>
               </motion.div>
             )}
 
@@ -94,10 +118,11 @@ export function Login() {
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value.trim())}
                     className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-gray-900 placeholder-gray-400"
                     placeholder="Enter your email"
                     required
+                    autoComplete="email"
                   />
                 </div>
               </div>
@@ -113,6 +138,7 @@ export function Login() {
                     className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-gray-900 placeholder-gray-400"
                     placeholder="Enter your password"
                     required
+                    autoComplete="current-password"
                   />
                 </div>
               </div>
@@ -144,6 +170,15 @@ export function Login() {
                 </Link>
               </p>
             </div>
+
+            {/* Debug info in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
+                <p><strong>Debug Info:</strong></p>
+                <p>Backend: http://localhost:5000</p>
+                <p>Make sure backend is running with: start-simple.bat</p>
+              </div>
+            )}
           </motion.div>
 
           {/* Footer */}

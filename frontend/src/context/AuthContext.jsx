@@ -24,36 +24,96 @@ export const AuthProvider = ({ children }) => {
 
   const loadUser = async () => {
     try {
-      const { data } = await authAPI.getProfile();
-      setUser(data);
+      const response = await authAPI.getProfile();
+      console.log('Profile response:', response.data);
+      
+      // Handle the response structure from backend
+      if (response.data.success && response.data.data) {
+        setUser(response.data.data);
+      } else {
+        throw new Error('Invalid profile response');
+      }
     } catch (error) {
+      console.error('Failed to load user:', error);
       localStorage.removeItem('token');
+      setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (credentials) => {
-    const { data } = await authAPI.login(credentials);
-    localStorage.setItem('token', data.token);
-    setUser(data);
-    return data;
+    try {
+      console.log('Attempting login with:', credentials);
+      const response = await authAPI.login(credentials);
+      console.log('Login response:', response.data);
+      
+      // Handle the response structure from backend
+      if (response.data.success && response.data.data) {
+        const { user, token } = response.data.data;
+        localStorage.setItem('token', token);
+        setUser({ user }); // Wrap user in expected structure
+        return response.data;
+      } else {
+        throw new Error(response.data.error?.message || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      const errorMessage = error.response?.data?.error?.message || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'Login failed';
+      throw new Error(errorMessage);
+    }
   };
 
   const register = async (userData) => {
-    const { data } = await authAPI.register(userData);
-    localStorage.setItem('token', data.token);
-    setUser(data);
-    return data;
+    try {
+      console.log('Attempting registration with:', userData);
+      const response = await authAPI.register(userData);
+      console.log('Registration response:', response.data);
+      
+      // Handle the response structure from backend
+      if (response.data.success && response.data.data) {
+        const { user, token } = response.data.data;
+        localStorage.setItem('token', token);
+        setUser({ user }); // Wrap user in expected structure
+        return response.data;
+      } else {
+        throw new Error(response.data.error?.message || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      const errorMessage = error.response?.data?.error?.message || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'Registration failed';
+      throw new Error(errorMessage);
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('token');
+      setUser(null);
+    }
+  };
+
+  const value = {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    loadUser
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

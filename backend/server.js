@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 // Load environment variables
 dotenv.config();
@@ -9,6 +11,161 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const USE_MEMORY_DB = process.env.USE_MEMORY_DB === 'true';
+
+// Database setup
+let mongoose, User, UserProfile, Conversation;
+let memoryDB = null;
+
+if (!USE_MEMORY_DB) {
+  try {
+    // Try to use MongoDB
+    mongoose = await import('mongoose');
+    
+    // MongoDB Models
+    const userSchema = new mongoose.Schema({
+      name: { type: String, required: true },
+      email: { type: String, required: true, unique: true },
+      password: { type: String, required: true },
+      age: { type: Number, required: true },
+      education: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now }
+    });
+
+    const userProfileSchema = new mongoose.Schema({
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      behavioralTraits: {
+        creativity: { type: Number, default: 5.0 },
+        analyticalThinking: { type: Number, default: 5.0 },
+        leadership: { type: Number, default: 5.0 },
+        teamwork: { type: Number, default: 5.0 },
+        communication: { type: Number, default: 5.0 },
+        problemSolving: { type: Number, default: 5.0 },
+        adaptability: { type: Number, default: 5.0 },
+        empathy: { type: Number, default: 5.0 }
+      },
+      personality: {
+        openness: { type: Number, default: 0.5 },
+        conscientiousness: { type: Number, default: 0.5 },
+        extraversion: { type: Number, default: 0.5 },
+        agreeableness: { type: Number, default: 0.5 },
+        neuroticism: { type: Number, default: 0.5 }
+      },
+      ikigai: {
+        whatYouLove: [String],
+        whatYoureGoodAt: [String],
+        whatTheWorldNeeds: [String],
+        whatYouCanBePaidFor: [String]
+      },
+      conversationCount: { type: Number, default: 0 },
+      profileCompleteness: { type: Number, default: 20 },
+      createdAt: { type: Date, default: Date.now },
+      updatedAt: { type: Date, default: Date.now }
+    });
+
+    const conversationSchema = new mongoose.Schema({
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      userMessage: { type: String, required: true },
+      aiResponse: { type: String, required: true },
+      analysis: {
+        sentiment: Number,
+        emotions: Object,
+        keywords: [String],
+        detectedTraits: Object
+      },
+      timestamp: { type: Date, default: Date.now }
+    });
+
+    User = mongoose.model('User', userSchema);
+    UserProfile = mongoose.model('UserProfile', userProfileSchema);
+    Conversation = mongoose.model('Conversation', conversationSchema);
+
+    // Connect to MongoDB
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/elevare');
+    console.log('✅ MongoDB connected successfully');
+    
+  } catch (error) {
+    console.log('⚠️  MongoDB connection failed, falling back to in-memory database');
+    console.log('Error:', error.message);
+    USE_MEMORY_DB = true;
+  }
+}
+
+// In-memory database fallback
+if (USE_MEMORY_DB) {
+  const users = new Map();
+  const userProfiles = new Map();
+  const conversations = new Map();
+  const recommendations = new Map();
+
+  memoryDB = {
+    users,
+    userProfiles,
+    conversations,
+    recommendations,
+    
+    generateId: () => Date.now().toString() + Math.random().toString(36).substr(2, 9),
+    
+    async createUser(userData) {
+      const id = this.generateId();
+      const user = { _id: id, ...userData, createdAt: new Date() };
+      this.users.set(id, user);
+      return user;
+    },
+    
+    async findUserByEmail(email) {
+      for (const [id, user] of this.users) {
+        if (user.email === email) return user;
+      }
+      return null;
+    },
+    
+    async findUserById(id) {
+      return this.users.get(id) || null;
+    },
+    
+    async createUserProfile(userId, profileData) {
+      const profile = {
+        _id: this.generateId(),
+        userId,
+        ...profileData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      this.userProfiles.set(userId, profile);
+      return profile;
+    },
+    
+    async findUserProfile(userId) {
+      return this.userProfiles.get(userId) || null;
+    },
+    
+    async updateUserProfile(userId, updates) {
+      const existing = this.userProfiles.get(userId);
+      if (existing) {
+        const updated = { ...existing, ...updates, updatedAt: new Date() };
+        this.userProfiles.set(userId, updated);
+        return updated;
+      }
+      return null;
+    },
+    
+    async saveConversation(conversationData) {
+      const id = this.generateId();
+      const conversation = { _id: id, ...conversationData, timestamp: new Date() };
+      
+      if (!this.conversations.has(conversationData.userId)) {
+        this.conversations.set(conversationData.userId, []);
+      }
+      this.conversations.get(conversationData.userId).push(conversation);
+      return conversation;
+    },
+    
+    async getUserConversations(userId, limit = 10) {
+      const conversations = this.conversations.get(userId) || [];
+      return conversations.slice(-limit).reverse();
+    }
+  };
+}
 
 // Middleware
 app.use(cors({
@@ -21,30 +178,63 @@ app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { success: false, error: { message: 'Too many requests from this IP, please try again later.' } }
 });
 app.use('/api/', limiter);
 
-// Database setup
-let db;
-if (USE_MEMORY_DB) {
-  console.log('🗄️  Using in-memory database for development');
-  const memoryDB = await import('./config/memoryDB.js');
-  db = memoryDB.default;
-} else {
-  console.log('🗄️  Connecting to MongoDB...');
+// Utility functions
+const createInitialProfile = (userId) => ({
+  userId,
+  behavioralTraits: {
+    creativity: 5.0,
+    analyticalThinking: 5.0,
+    leadership: 5.0,
+    teamwork: 5.0,
+    communication: 5.0,
+    problemSolving: 5.0,
+    adaptability: 5.0,
+    empathy: 5.0
+  },
+  personality: {
+    openness: 0.5,
+    conscientiousness: 0.5,
+    extraversion: 0.5,
+    agreeableness: 0.5,
+    neuroticism: 0.5
+  },
+  ikigai: {
+    whatYouLove: [],
+    whatYoureGoodAt: [],
+    whatTheWorldNeeds: [],
+    whatYouCanBePaidFor: []
+  },
+  conversationCount: 0,
+  profileCompleteness: 20
+});
+
+// JWT middleware
+const verifyToken = (req, res, next) => {
   try {
-    const mongoose = await import('mongoose');
-    await mongoose.default.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/elevare');
-    console.log('✅ MongoDB connected successfully');
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: { message: 'Access denied. No token provided.' }
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev_secret');
+    req.user = decoded;
+    next();
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error.message);
-    console.log('💡 Tip: Run with USE_MEMORY_DB=true for development without MongoDB');
-    process.exit(1);
+    res.status(401).json({
+      success: false,
+      error: { message: 'Invalid token' }
+    });
   }
-}
+};
 
 // Routes
 app.get('/', (req, res) => {
@@ -53,6 +243,7 @@ app.get('/', (req, res) => {
     version: '1.2.0',
     status: 'running',
     database: USE_MEMORY_DB ? 'in-memory' : 'mongodb',
+    features: ['authentication', 'conversations', 'recommendations', 'profiles'],
     timestamp: new Date().toISOString()
   });
 });
@@ -62,16 +253,17 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     database: USE_MEMORY_DB ? 'in-memory' : 'mongodb',
     uptime: process.uptime(),
+    users: USE_MEMORY_DB ? memoryDB.users.size : 'N/A',
     timestamp: new Date().toISOString()
   });
 });
 
-// Auth routes with memory DB support
+// Auth Routes
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, email, password, age, education } = req.body;
     
-    // Basic validation
+    // Validation
     if (!name || !email || !password || !age || !education) {
       return res.status(400).json({
         success: false,
@@ -79,22 +271,30 @@ app.post('/api/auth/register', async (req, res) => {
       });
     }
 
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Password must be at least 6 characters long' }
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    let user, profile;
+
     if (USE_MEMORY_DB) {
       // Check if user exists
-      const existingUser = await db.findUserByEmail(email);
+      const existingUser = await memoryDB.findUserByEmail(email);
       if (existingUser) {
         return res.status(409).json({
           success: false,
-          error: { message: 'User already exists' }
+          error: { message: 'User already exists with this email' }
         });
       }
 
-      // Hash password (simplified for demo)
-      const bcrypt = await import('bcryptjs');
-      const hashedPassword = await bcrypt.default.hash(password, 12);
-
       // Create user
-      const user = await db.createUser({
+      user = await memoryDB.createUser({
         name,
         email,
         password: hashedPassword,
@@ -102,58 +302,53 @@ app.post('/api/auth/register', async (req, res) => {
         education
       });
 
-      // Create initial profile
-      await db.createUserProfile(user._id, {
-        behavioralTraits: {
-          creativity: 5.0,
-          analyticalThinking: 5.0,
-          leadership: 5.0,
-          teamwork: 5.0,
-          communication: 5.0,
-          problemSolving: 5.0,
-          adaptability: 5.0,
-          empathy: 5.0
-        },
-        personality: {
-          openness: 0.5,
-          conscientiousness: 0.5,
-          extraversion: 0.5,
-          agreeableness: 0.5,
-          neuroticism: 0.5
-        },
-        conversationCount: 0,
-        profileCompleteness: 20
-      });
-
-      // Generate JWT
-      const jwt = await import('jsonwebtoken');
-      const token = jwt.default.sign(
-        { userId: user._id, email: user.email },
-        process.env.JWT_SECRET || 'dev_secret',
-        { expiresIn: process.env.JWT_EXPIRE || '7d' }
-      );
-
-      res.status(201).json({
-        success: true,
-        message: 'User registered successfully',
-        data: {
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            age: user.age,
-            education: user.education
-          },
-          token
-        }
-      });
+      // Create profile
+      profile = await memoryDB.createUserProfile(user._id, createInitialProfile(user._id));
     } else {
-      // MongoDB implementation would go here
-      res.status(501).json({
-        success: false,
-        error: { message: 'MongoDB implementation needed' }
+      // MongoDB implementation
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(409).json({
+          success: false,
+          error: { message: 'User already exists with this email' }
+        });
+      }
+
+      user = new User({
+        name,
+        email,
+        password: hashedPassword,
+        age: parseInt(age),
+        education
       });
+      await user.save();
+
+      profile = new UserProfile(createInitialProfile(user._id));
+      await profile.save();
     }
+
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET || 'dev_secret',
+      { expiresIn: process.env.JWT_EXPIRE || '7d' }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          age: user.age,
+          education: user.education,
+          createdAt: user.createdAt
+        },
+        token
+      }
+    });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({
@@ -174,55 +369,52 @@ app.post('/api/auth/login', async (req, res) => {
       });
     }
 
+    let user;
+
     if (USE_MEMORY_DB) {
-      // Find user
-      const user = await db.findUserByEmail(email);
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          error: { message: 'Invalid credentials' }
-        });
-      }
-
-      // Check password
-      const bcrypt = await import('bcryptjs');
-      const isValidPassword = await bcrypt.default.compare(password, user.password);
-      if (!isValidPassword) {
-        return res.status(401).json({
-          success: false,
-          error: { message: 'Invalid credentials' }
-        });
-      }
-
-      // Generate JWT
-      const jwt = await import('jsonwebtoken');
-      const token = jwt.default.sign(
-        { userId: user._id, email: user.email },
-        process.env.JWT_SECRET || 'dev_secret',
-        { expiresIn: process.env.JWT_EXPIRE || '7d' }
-      );
-
-      res.json({
-        success: true,
-        message: 'Login successful',
-        data: {
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            age: user.age,
-            education: user.education
-          },
-          token
-        }
-      });
+      user = await memoryDB.findUserByEmail(email);
     } else {
-      // MongoDB implementation would go here
-      res.status(501).json({
+      user = await User.findOne({ email });
+    }
+
+    if (!user) {
+      return res.status(401).json({
         success: false,
-        error: { message: 'MongoDB implementation needed' }
+        error: { message: 'Invalid email or password' }
       });
     }
+
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({
+        success: false,
+        error: { message: 'Invalid email or password' }
+      });
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET || 'dev_secret',
+      { expiresIn: process.env.JWT_EXPIRE || '7d' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          age: user.age,
+          education: user.education,
+          createdAt: user.createdAt
+        },
+        token
+      }
+    });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({
@@ -232,68 +424,40 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Simple middleware to verify JWT
-const verifyToken = async (req, res, next) => {
-  try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: { message: 'Access denied. No token provided.' }
-      });
-    }
-
-    const jwt = await import('jsonwebtoken');
-    const decoded = jwt.default.verify(token, process.env.JWT_SECRET || 'dev_secret');
-    req.user = decoded;
-    next();
-  } catch (error) {
-    res.status(401).json({
-      success: false,
-      error: { message: 'Invalid token' }
-    });
-  }
-};
-
-// Profile routes
+// Profile Routes
 app.get('/api/profile', verifyToken, async (req, res) => {
   try {
-    if (USE_MEMORY_DB) {
-      const user = await db.findUserById(req.user.userId);
-      const profile = await db.findUserProfile(req.user.userId);
-      
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          error: { message: 'User not found' }
-        });
-      }
+    let user, profile;
 
-      res.json({
-        success: true,
-        data: {
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            age: user.age,
-            education: user.education,
-            createdAt: user.createdAt
-          },
-          profile: profile || {
-            behavioralTraits: {},
-            personality: {},
-            conversationCount: 0,
-            profileCompleteness: 20
-          }
-        }
-      });
+    if (USE_MEMORY_DB) {
+      user = await memoryDB.findUserById(req.user.userId);
+      profile = await memoryDB.findUserProfile(req.user.userId);
     } else {
-      res.status(501).json({
+      user = await User.findById(req.user.userId);
+      profile = await UserProfile.findOne({ userId: req.user.userId });
+    }
+    
+    if (!user) {
+      return res.status(404).json({
         success: false,
-        error: { message: 'MongoDB implementation needed' }
+        error: { message: 'User not found' }
       });
     }
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          age: user.age,
+          education: user.education,
+          createdAt: user.createdAt
+        },
+        profile: profile || createInitialProfile(req.user.userId)
+      }
+    });
   } catch (error) {
     console.error('Profile error:', error);
     res.status(500).json({
@@ -303,74 +467,190 @@ app.get('/api/profile', verifyToken, async (req, res) => {
   }
 });
 
-// Conversation routes
+// Conversation Routes
 app.post('/api/conversations/message', verifyToken, async (req, res) => {
   try {
     const { message } = req.body;
     
-    if (!message) {
+    if (!message || message.trim().length === 0) {
       return res.status(400).json({
         success: false,
         error: { message: 'Message is required' }
       });
     }
 
-    // Simple AI response for demo
-    const responses = [
-      "That's interesting! Tell me more about what motivated you in that experience.",
-      "I can see you're passionate about this. How did it make you feel?",
-      "What aspects of this situation challenged you the most?",
-      "That sounds like a great learning experience. What would you do differently?",
-      "How do you think this experience relates to your career goals?"
-    ];
-    
-    const aiResponse = responses[Math.floor(Math.random() * responses.length)];
+    // Generate AI response
+    const generateAIResponse = (userMessage) => {
+      const responses = {
+        greeting: [
+          "Hello! I'm excited to learn more about you. What's been on your mind lately?",
+          "Hi there! Tell me about something that made you feel accomplished recently.",
+          "Welcome! I'd love to hear about what motivates you in your daily life."
+        ],
+        work: [
+          "That sounds like meaningful work! What aspects of it do you find most engaging?",
+          "Interesting! How do you think this experience is shaping your career interests?",
+          "I can sense your passion for this. What skills are you developing through this work?"
+        ],
+        learning: [
+          "Learning is such a valuable pursuit! What draws you to this particular subject?",
+          "That's wonderful! How do you see this knowledge fitting into your future goals?",
+          "Education opens so many doors. What's the most surprising thing you've discovered?"
+        ],
+        challenge: [
+          "Challenges often lead to the most growth. How are you approaching this situation?",
+          "It sounds like you're facing something important. What strategies have you tried?",
+          "Difficult situations can reveal our strengths. What have you learned about yourself?"
+        ],
+        default: [
+          "That's really interesting! Can you tell me more about how this makes you feel?",
+          "I'd love to understand this better. What impact has this had on your thinking?",
+          "Thank you for sharing that. What would you say is the most important part of this experience?",
+          "How do you think this connects to your broader goals and interests?",
+          "What aspects of this situation energize you the most?"
+        ]
+      };
+
+      const lowerMessage = userMessage.toLowerCase();
+      let category = 'default';
+
+      if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+        category = 'greeting';
+      } else if (lowerMessage.includes('work') || lowerMessage.includes('job') || lowerMessage.includes('career')) {
+        category = 'work';
+      } else if (lowerMessage.includes('learn') || lowerMessage.includes('study') || lowerMessage.includes('school')) {
+        category = 'learning';
+      } else if (lowerMessage.includes('difficult') || lowerMessage.includes('challenge') || lowerMessage.includes('problem')) {
+        category = 'challenge';
+      }
+
+      const categoryResponses = responses[category];
+      return categoryResponses[Math.floor(Math.random() * categoryResponses.length)];
+    };
+
+    const aiResponse = generateAIResponse(message);
+
+    // Simple analysis
+    const analyzeMessage = (msg) => {
+      const positiveWords = ['happy', 'excited', 'love', 'enjoy', 'great', 'amazing', 'wonderful', 'good', 'excellent'];
+      const negativeWords = ['sad', 'frustrated', 'hate', 'difficult', 'hard', 'challenging', 'bad', 'terrible'];
+      const creativityWords = ['create', 'design', 'art', 'music', 'write', 'imagine', 'innovative'];
+      const analyticalWords = ['analyze', 'data', 'logic', 'research', 'study', 'calculate', 'solve'];
+      
+      const words = msg.toLowerCase().split(' ');
+      let sentiment = 0;
+      let creativity = 0;
+      let analytical = 0;
+
+      words.forEach(word => {
+        if (positiveWords.includes(word)) sentiment += 0.1;
+        if (negativeWords.includes(word)) sentiment -= 0.1;
+        if (creativityWords.includes(word)) creativity += 0.1;
+        if (analyticalWords.includes(word)) analytical += 0.1;
+      });
+
+      return {
+        sentiment: Math.max(-1, Math.min(1, sentiment)),
+        emotions: {
+          joy: Math.max(0, sentiment),
+          sadness: Math.max(0, -sentiment),
+          engagement: Math.random() * 0.5 + 0.3
+        },
+        keywords: words.filter(word => word.length > 3).slice(0, 5),
+        detectedTraits: {
+          creativity: Math.max(0, Math.min(10, 5 + creativity * 10)),
+          analyticalThinking: Math.max(0, Math.min(10, 5 + analytical * 10))
+        }
+      };
+    };
+
+    const analysis = analyzeMessage(message);
+
+    // Save conversation
+    let conversation, profile;
 
     if (USE_MEMORY_DB) {
-      // Save conversation
-      const conversation = await db.saveConversation({
+      conversation = await memoryDB.saveConversation({
         userId: req.user.userId,
         userMessage: message,
         aiResponse: aiResponse,
-        analysis: {
-          sentiment: Math.random() * 2 - 1, // Random sentiment between -1 and 1
-          emotions: {
-            joy: Math.random(),
-            sadness: Math.random(),
-            anger: Math.random(),
-            fear: Math.random(),
-            surprise: Math.random()
-          },
-          keywords: message.split(' ').filter(word => word.length > 3).slice(0, 5)
-        }
+        analysis: analysis
       });
 
-      // Update conversation count
-      const profile = await db.findUserProfile(req.user.userId);
+      // Update profile
+      profile = await memoryDB.findUserProfile(req.user.userId);
       if (profile) {
-        await db.updateUserProfile(req.user.userId, {
-          conversationCount: (profile.conversationCount || 0) + 1
-        });
-      }
-
-      res.json({
-        success: true,
-        data: {
-          conversation: {
-            id: conversation._id,
-            userMessage: message,
-            aiResponse: aiResponse,
-            timestamp: conversation.timestamp
-          },
-          analysis: conversation.analysis
+        profile.conversationCount = (profile.conversationCount || 0) + 1;
+        
+        // Update traits
+        if (analysis.detectedTraits.creativity) {
+          profile.behavioralTraits.creativity = Math.min(10, 
+            (profile.behavioralTraits.creativity * 0.9) + (analysis.detectedTraits.creativity * 0.1)
+          );
         }
-      });
+        if (analysis.detectedTraits.analyticalThinking) {
+          profile.behavioralTraits.analyticalThinking = Math.min(10,
+            (profile.behavioralTraits.analyticalThinking * 0.9) + (analysis.detectedTraits.analyticalThinking * 0.1)
+          );
+        }
+        
+        await memoryDB.updateUserProfile(req.user.userId, profile);
+      }
     } else {
-      res.status(501).json({
-        success: false,
-        error: { message: 'MongoDB implementation needed' }
+      conversation = new Conversation({
+        userId: req.user.userId,
+        userMessage: message,
+        aiResponse: aiResponse,
+        analysis: analysis
       });
+      await conversation.save();
+
+      // Update profile
+      profile = await UserProfile.findOne({ userId: req.user.userId });
+      if (profile) {
+        profile.conversationCount = (profile.conversationCount || 0) + 1;
+        
+        // Update traits
+        if (analysis.detectedTraits.creativity) {
+          profile.behavioralTraits.creativity = Math.min(10, 
+            (profile.behavioralTraits.creativity * 0.9) + (analysis.detectedTraits.creativity * 0.1)
+          );
+        }
+        if (analysis.detectedTraits.analyticalThinking) {
+          profile.behavioralTraits.analyticalThinking = Math.min(10,
+            (profile.behavioralTraits.analyticalThinking * 0.9) + (analysis.detectedTraits.analyticalThinking * 0.1)
+          );
+        }
+        
+        profile.updatedAt = new Date();
+        await profile.save();
+      }
     }
+
+    res.json({
+      success: true,
+      data: {
+        conversation: {
+          id: conversation._id,
+          userMessage: message,
+          aiResponse: aiResponse,
+          timestamp: conversation.timestamp
+        },
+        analysis: {
+          sentiment: analysis.sentiment,
+          emotions: analysis.emotions,
+          keywords: analysis.keywords,
+          detectedTraits: Object.entries(analysis.detectedTraits).map(([trait, value]) => ({
+            trait,
+            value: parseFloat(value.toFixed(1))
+          }))
+        },
+        updatedTraits: profile ? {
+          creativity: parseFloat(profile.behavioralTraits.creativity.toFixed(1)),
+          analyticalThinking: parseFloat(profile.behavioralTraits.analyticalThinking.toFixed(1))
+        } : {}
+      }
+    });
   } catch (error) {
     console.error('Conversation error:', error);
     res.status(500).json({
@@ -380,30 +660,31 @@ app.post('/api/conversations/message', verifyToken, async (req, res) => {
   }
 });
 
-// Get conversation history
 app.get('/api/conversations/history', verifyToken, async (req, res) => {
   try {
+    let conversations;
+
     if (USE_MEMORY_DB) {
-      const conversations = await db.getUserConversations(req.user.userId, 20);
-      
-      res.json({
-        success: true,
-        data: {
-          conversations: conversations.map(conv => ({
-            id: conv._id,
-            userMessage: conv.userMessage,
-            aiResponse: conv.aiResponse,
-            timestamp: conv.timestamp
-          })),
-          total: conversations.length
-        }
-      });
+      conversations = await memoryDB.getUserConversations(req.user.userId, 20);
     } else {
-      res.status(501).json({
-        success: false,
-        error: { message: 'MongoDB implementation needed' }
-      });
+      conversations = await Conversation.find({ userId: req.user.userId })
+        .sort({ timestamp: -1 })
+        .limit(20);
     }
+
+    res.json({
+      success: true,
+      data: {
+        conversations: conversations.map(conv => ({
+          id: conv._id,
+          userMessage: conv.userMessage,
+          aiResponse: conv.aiResponse,
+          sentiment: conv.analysis?.sentiment || 0,
+          timestamp: conv.timestamp
+        })),
+        total: conversations.length
+      }
+    });
   } catch (error) {
     console.error('History error:', error);
     res.status(500).json({
@@ -413,7 +694,117 @@ app.get('/api/conversations/history', verifyToken, async (req, res) => {
   }
 });
 
-// Error handling middleware
+// Recommendations Routes
+app.post('/api/recommendations/generate', verifyToken, async (req, res) => {
+  try {
+    let profile;
+
+    if (USE_MEMORY_DB) {
+      profile = await memoryDB.findUserProfile(req.user.userId);
+    } else {
+      profile = await UserProfile.findOne({ userId: req.user.userId });
+    }
+    
+    if (!profile || profile.conversationCount < 3) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Please have at least 3 conversations before generating recommendations' }
+      });
+    }
+
+    // Generate recommendations based on traits
+    const generateRecommendations = (traits) => {
+      const careers = [
+        {
+          title: 'Software Engineer',
+          match: (traits.analyticalThinking * 0.3 + traits.problemSolving * 0.3 + traits.creativity * 0.2 + traits.adaptability * 0.2) / 10,
+          description: 'Design and develop software applications and systems',
+          skills: ['Programming', 'Problem Solving', 'Logical Thinking'],
+          salary: '$95,000',
+          growth: '22%'
+        },
+        {
+          title: 'Product Manager',
+          match: (traits.leadership * 0.3 + traits.communication * 0.3 + traits.analyticalThinking * 0.2 + traits.teamwork * 0.2) / 10,
+          description: 'Guide product development from conception to launch',
+          skills: ['Leadership', 'Communication', 'Strategic Thinking'],
+          salary: '$115,000',
+          growth: '19%'
+        },
+        {
+          title: 'UX Designer',
+          match: (traits.creativity * 0.4 + traits.empathy * 0.3 + traits.problemSolving * 0.2 + traits.communication * 0.1) / 10,
+          description: 'Create intuitive and engaging user experiences',
+          skills: ['Design', 'User Research', 'Creativity'],
+          salary: '$85,000',
+          growth: '13%'
+        },
+        {
+          title: 'Data Scientist',
+          match: (traits.analyticalThinking * 0.4 + traits.problemSolving * 0.3 + traits.creativity * 0.2 + traits.adaptability * 0.1) / 10,
+          description: 'Analyze complex data to drive business decisions',
+          skills: ['Statistics', 'Programming', 'Critical Thinking'],
+          salary: '$120,000',
+          growth: '31%'
+        },
+        {
+          title: 'Marketing Manager',
+          match: (traits.creativity * 0.3 + traits.communication * 0.3 + traits.leadership * 0.2 + traits.adaptability * 0.2) / 10,
+          description: 'Develop and execute marketing strategies',
+          skills: ['Marketing', 'Communication', 'Creativity'],
+          salary: '$75,000',
+          growth: '10%'
+        }
+      ];
+
+      return careers
+        .map(career => ({
+          ...career,
+          matchScore: Math.min(0.95, Math.max(0.4, career.match + (Math.random() * 0.1 - 0.05))),
+          confidence: Math.min(0.9, Math.max(0.6, career.match * 0.8 + (Math.random() * 0.1)))
+        }))
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 5);
+    };
+
+    const recommendationData = generateRecommendations(profile.behavioralTraits);
+
+    res.json({
+      success: true,
+      data: {
+        recommendations: recommendationData.map(rec => ({
+          career: rec.title,
+          matchScore: parseFloat(rec.matchScore.toFixed(2)),
+          confidence: parseFloat(rec.confidence.toFixed(2)),
+          description: rec.description,
+          requiredSkills: rec.skills,
+          averageSalary: rec.salary,
+          growthRate: rec.growth,
+          reasoning: {
+            strengths: [
+              `Strong ${Object.entries(profile.behavioralTraits)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 2)
+                .map(([trait]) => trait.replace(/([A-Z])/g, ' $1').toLowerCase())
+                .join(' and ')} skills`,
+              `Good fit for ${rec.title.toLowerCase()} role requirements`
+            ]
+          }
+        })),
+        generatedAt: new Date().toISOString(),
+        basedOnConversations: profile.conversationCount
+      }
+    });
+  } catch (error) {
+    console.error('Recommendation error:', error);
+    res.status(500).json({
+      success: false,
+      error: { message: 'Internal server error' }
+    });
+  }
+});
+
+// Error handling
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({
@@ -422,7 +813,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -436,10 +826,10 @@ app.listen(PORT, () => {
   console.log(`🗄️  Database: ${USE_MEMORY_DB ? 'In-Memory (Development)' : 'MongoDB'}`);
   console.log(`🌐 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`✨ Ready for user registration and full functionality!`);
   
   if (USE_MEMORY_DB) {
-    console.log('💡 Demo login: demo@elevare.com / password123');
-    console.log('⚠️  Note: Data will be lost when server restarts');
+    console.log(`⚠️  Note: Using in-memory database - data will be lost on restart`);
   }
 });
 
