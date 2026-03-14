@@ -9,6 +9,13 @@ from services.recommendation_engine import RecommendationEngine
 from utils.database import DatabaseManager
 from data.career_data import CAREER_DATABASE
 from bson import ObjectId
+from bson.errors import InvalidId
+
+def parse_user_id(user_id: str):
+    try:
+        return ObjectId(user_id)
+    except (InvalidId, Exception):
+        return user_id
 
 app = FastAPI(title="ELEVARE AI Services", version="1.0.0")
 
@@ -46,10 +53,22 @@ async def process_message(request: ProcessMessageRequest):
         analysis = nlp_processor.process_message(request.message)
         
         # Get user profile
-        user_profile = db_manager.get_user_profile(ObjectId(request.userId))
-        
+        user_profile = db_manager.get_user_profile(parse_user_id(request.userId))
+
+        # Fall back to default profile so LLM still responds even without DB
         if not user_profile:
-            raise HTTPException(status_code=404, detail="User profile not found")
+            user_profile = {
+                'behavioralTraits': {
+                    'creativity': 5.0, 'analyticalThinking': 5.0, 'leadership': 5.0,
+                    'teamwork': 5.0, 'communication': 5.0, 'problemSolving': 5.0,
+                    'adaptability': 5.0, 'empathy': 5.0
+                },
+                'personality': {
+                    'openness': 0.5, 'conscientiousness': 0.5, 'extraversion': 0.5,
+                    'agreeableness': 0.5, 'neuroticism': 0.5
+                },
+                'interests': []
+            }
         
         # Update behavioral traits
         current_traits = user_profile.get('behavioralTraits', {})
@@ -108,7 +127,7 @@ async def generate_recommendations(request: RecommendationRequest):
     """Generate career recommendations based on user profile"""
     try:
         # Get user profile
-        user_profile = db_manager.get_user_profile(ObjectId(request.userId))
+        user_profile = db_manager.get_user_profile(parse_user_id(request.userId))
         
         if not user_profile:
             raise HTTPException(status_code=404, detail="User profile not found")

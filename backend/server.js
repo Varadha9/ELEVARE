@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const USE_MEMORY_DB = process.env.USE_MEMORY_DB === 'true';
+let USE_MEMORY_DB = process.env.USE_MEMORY_DB === 'true';
 
 // Database setup
 let mongoose, User, UserProfile, Conversation;
@@ -67,7 +67,7 @@ if (!USE_MEMORY_DB) {
       userMessage: { type: String, required: true },
       aiResponse: { type: String, required: true },
       analysis: {
-        sentiment: Number,
+        sentiment: mongoose.Schema.Types.Mixed,
         emotions: Object,
         keywords: [String],
         detectedTraits: Object
@@ -717,6 +717,56 @@ app.get('/api/conversations/history', verifyToken, async (req, res) => {
 });
 
 // Recommendations Routes
+app.get('/api/recommendations', verifyToken, async (req, res) => {
+  try {
+    let profile;
+    if (USE_MEMORY_DB) {
+      profile = await memoryDB.findUserProfile(req.user.userId);
+    } else {
+      profile = await UserProfile.findOne({ userId: req.user.userId });
+    }
+
+    if (!profile || profile.conversationCount < 3) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const generateRecommendations = (traits) => {
+      const careers = [
+        { title: 'Software Engineer', match: (traits.analyticalThinking * 0.3 + traits.problemSolving * 0.3 + traits.creativity * 0.2 + traits.adaptability * 0.2) / 10, description: 'Design and develop software applications', skills: ['Programming', 'Problem Solving', 'Logical Thinking'], salary: '$95,000', growth: '22%' },
+        { title: 'Product Manager', match: (traits.leadership * 0.3 + traits.communication * 0.3 + traits.analyticalThinking * 0.2 + traits.teamwork * 0.2) / 10, description: 'Guide product development from conception to launch', skills: ['Leadership', 'Communication', 'Strategic Thinking'], salary: '$115,000', growth: '19%' },
+        { title: 'UX Designer', match: (traits.creativity * 0.4 + traits.empathy * 0.3 + traits.problemSolving * 0.2 + traits.communication * 0.1) / 10, description: 'Create intuitive and engaging user experiences', skills: ['Design', 'User Research', 'Creativity'], salary: '$85,000', growth: '13%' },
+        { title: 'Data Scientist', match: (traits.analyticalThinking * 0.4 + traits.problemSolving * 0.3 + traits.creativity * 0.2 + traits.adaptability * 0.1) / 10, description: 'Analyze complex data to drive business decisions', skills: ['Statistics', 'Programming', 'Critical Thinking'], salary: '$120,000', growth: '31%' },
+        { title: 'Marketing Manager', match: (traits.creativity * 0.3 + traits.communication * 0.3 + traits.leadership * 0.2 + traits.adaptability * 0.2) / 10, description: 'Develop and execute marketing strategies', skills: ['Marketing', 'Communication', 'Creativity'], salary: '$75,000', growth: '10%' }
+      ];
+      return careers
+        .map(c => ({ ...c, matchScore: Math.min(0.95, Math.max(0.4, c.match + (Math.random() * 0.1 - 0.05))), confidence: Math.min(0.9, Math.max(0.6, c.match * 0.8 + (Math.random() * 0.1))) }))
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 5);
+    };
+
+    const recs = generateRecommendations(profile.behavioralTraits);
+    res.json({
+      success: true,
+      data: recs.map(rec => ({
+        career: rec.title,
+        careerTitle: rec.title,
+        matchScore: parseFloat(rec.matchScore.toFixed(2)),
+        confidenceScore: parseFloat((rec.matchScore * 100).toFixed(0)),
+        confidence: parseFloat(rec.confidence.toFixed(2)),
+        description: rec.description,
+        reasoning: rec.description,
+        requiredSkills: rec.skills,
+        matchedTraits: Object.entries(profile.behavioralTraits).sort(([,a],[,b]) => b-a).slice(0,3).map(([k]) => k.replace(/([A-Z])/g, ' $1').trim()),
+        averageSalary: rec.salary,
+        growthRate: rec.growth
+      }))
+    });
+  } catch (error) {
+    console.error('Get recommendations error:', error);
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+  }
+});
+
 app.post('/api/recommendations/generate', verifyToken, async (req, res) => {
   try {
     let profile;

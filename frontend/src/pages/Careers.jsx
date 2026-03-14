@@ -19,7 +19,8 @@ export function Careers() {
   const fetchRecommendations = async () => {
     try {
       const response = await api.get('/recommendations');
-      setRecommendations(response.data);
+      const data = response.data?.data || response.data || [];
+      setRecommendations(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching recommendations:', error);
     }
