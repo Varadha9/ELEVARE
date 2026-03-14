@@ -1,6 +1,8 @@
 import os
 import requests
 from typing import List, Dict
+from dotenv import load_dotenv
+load_dotenv()
 
 class GroqLLMClient:
     def __init__(self):

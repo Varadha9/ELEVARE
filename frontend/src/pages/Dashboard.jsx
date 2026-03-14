@@ -32,9 +32,11 @@ export function Dashboard() {
         api.get('/profile').catch(() => ({ data: { data: null } })),
         api.get('/recommendations').catch(() => ({ data: { data: [] } }))
       ]);
-      
-      setProfile(profileRes.data?.data || profileRes.data);
-      setRecommendations((recsRes.data?.data || recsRes.data || []).slice(0, 3));
+
+      const profileData = profileRes.data?.data?.profile || profileRes.data?.data || profileRes.data;
+      setProfile(profileData);
+      const recsData = recsRes.data?.data || recsRes.data || [];
+      setRecommendations((Array.isArray(recsData) ? recsData : []).slice(0, 3));
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to load dashboard data');
@@ -44,8 +46,8 @@ export function Dashboard() {
   };
 
   const userName = user?.user?.name || user?.name || 'there';
-  const conversationCount = profile?.stats?.conversationCount || 0;
-  const streak = profile?.stats?.streak || 0;
+  const conversationCount = profile?.conversationCount || 0;
+  const streak = profile?.streak || 0;
   const recommendationCount = recommendations.length;
 
   const container = {

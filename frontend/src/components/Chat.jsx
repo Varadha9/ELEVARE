@@ -40,6 +40,11 @@ export default function Chat() {
       }]);
     } catch (error) {
       console.error('Error sending message:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, something went wrong. Please try again.',
+        timestamp: new Date()
+      }]);
     } finally {
       setLoading(false);
     }

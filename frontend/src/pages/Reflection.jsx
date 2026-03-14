@@ -26,22 +26,28 @@ export function Reflection() {
 
   const fetchConversations = async () => {
     try {
-      const response = await api.get('/conversations');
-      const formatted = response.data.flatMap(conv => [
-        { role: 'assistant', content: conv.aiMessage, timestamp: conv.timestamp },
-        { role: 'user', content: conv.userMessage, timestamp: conv.timestamp }
+      const response = await api.get('/conversations/history');
+      const convs = response.data?.data?.conversations || [];
+      const formatted = convs.flatMap(conv => [
+        { role: 'user', content: conv.userMessage, timestamp: conv.timestamp },
+        { role: 'assistant', content: conv.aiResponse, timestamp: conv.timestamp }
       ]);
-      setMessages(formatted);
-      
       if (formatted.length === 0) {
         setMessages([{
           role: 'assistant',
           content: 'Hello! I\'m your AI career discovery assistant. Let\'s start by talking about what made you feel productive today. What activities did you enjoy?',
           timestamp: new Date()
         }]);
+      } else {
+        setMessages(formatted);
       }
     } catch (error) {
       console.error('Error fetching conversations:', error);
+      setMessages([{
+        role: 'assistant',
+        content: 'Hello! I\'m your AI career discovery assistant. What activities did you enjoy today?',
+        timestamp: new Date()
+      }]);
     }
   };
 
