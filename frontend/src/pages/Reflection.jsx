@@ -55,14 +55,24 @@ export function Reflection() {
 
     try {
       const response = await api.post('/conversations/message', { message: input });
+      
+      // Handle different response structures
+      const data = response.data.data || response.data;
+      const aiResponse = data.conversation?.aiResponse || data.aiResponse || data.message;
+      
+      if (!aiResponse) {
+        throw new Error('No AI response received');
+      }
+      
       const aiMessage = {
         role: 'assistant',
-        content: response.data.aiResponse,
+        content: aiResponse,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
+      console.error('Full error:', error.response?.data || error.message);
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: 'Sorry, I encountered an error. Please try again.',

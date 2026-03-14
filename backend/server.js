@@ -479,92 +479,119 @@ app.post('/api/conversations/message', verifyToken, async (req, res) => {
       });
     }
 
-    // Generate AI response
-    const generateAIResponse = (userMessage) => {
-      const responses = {
-        greeting: [
-          "Hello! I'm excited to learn more about you. What's been on your mind lately?",
-          "Hi there! Tell me about something that made you feel accomplished recently.",
-          "Welcome! I'd love to hear about what motivates you in your daily life."
-        ],
-        work: [
-          "That sounds like meaningful work! What aspects of it do you find most engaging?",
-          "Interesting! How do you think this experience is shaping your career interests?",
-          "I can sense your passion for this. What skills are you developing through this work?"
-        ],
-        learning: [
-          "Learning is such a valuable pursuit! What draws you to this particular subject?",
-          "That's wonderful! How do you see this knowledge fitting into your future goals?",
-          "Education opens so many doors. What's the most surprising thing you've discovered?"
-        ],
-        challenge: [
-          "Challenges often lead to the most growth. How are you approaching this situation?",
-          "It sounds like you're facing something important. What strategies have you tried?",
-          "Difficult situations can reveal our strengths. What have you learned about yourself?"
-        ],
-        default: [
+    let aiResponse, analysis;
+
+    // Try to call AI service first
+    try {
+      const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+      
+      // Get conversation history
+      let conversationHistory = [];
+      if (USE_MEMORY_DB) {
+        const userConvs = await memoryDB.getUserConversations(req.user.userId, 5);
+        conversationHistory = userConvs.map(c => ([
+          { role: 'user', content: c.userMessage },
+          { role: 'assistant', content: c.aiResponse }
+        ])).flat();
+      } else {
+        const convs = await Conversation.find({ userId: req.user.userId })
+          .sort({ timestamp: -1 })
+          .limit(5);
+        conversationHistory = convs.reverse().map(c => ([
+          { role: 'user', content: c.userMessage },
+          { role: 'assistant', content: c.aiResponse }
+        ])).flat();
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      const aiServiceResponse = await fetch(`${AI_SERVICE_URL}/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: req.user.userId,
+          message: message,
+          conversationHistory: conversationHistory
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (aiServiceResponse.ok) {
+        const aiData = await aiServiceResponse.json();
+        aiResponse = aiData.response;
+        analysis = aiData.analysis;
+        console.log('✅ AI Service response received');
+      } else {
+        throw new Error('AI service returned error');
+      }
+    } catch (aiError) {
+      console.warn('⚠️ AI Service unavailable, using fallback:', aiError.message);
+      
+      // Fallback response generator
+      const generateFallbackResponse = (userMessage) => {
+        const responses = [
           "That's really interesting! Can you tell me more about how this makes you feel?",
           "I'd love to understand this better. What impact has this had on your thinking?",
           "Thank you for sharing that. What would you say is the most important part of this experience?",
           "How do you think this connects to your broader goals and interests?",
           "What aspects of this situation energize you the most?"
-        ]
+        ];
+        return responses[Math.floor(Math.random() * responses.length)];
       };
 
-      const lowerMessage = userMessage.toLowerCase();
-      let category = 'default';
-
-      if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-        category = 'greeting';
-      } else if (lowerMessage.includes('work') || lowerMessage.includes('job') || lowerMessage.includes('career')) {
-        category = 'work';
-      } else if (lowerMessage.includes('learn') || lowerMessage.includes('study') || lowerMessage.includes('school')) {
-        category = 'learning';
-      } else if (lowerMessage.includes('difficult') || lowerMessage.includes('challenge') || lowerMessage.includes('problem')) {
-        category = 'challenge';
-      }
-
-      const categoryResponses = responses[category];
-      return categoryResponses[Math.floor(Math.random() * categoryResponses.length)];
-    };
-
-    const aiResponse = generateAIResponse(message);
-
-    // Simple analysis
-    const analyzeMessage = (msg) => {
-      const positiveWords = ['happy', 'excited', 'love', 'enjoy', 'great', 'amazing', 'wonderful', 'good', 'excellent'];
-      const negativeWords = ['sad', 'frustrated', 'hate', 'difficult', 'hard', 'challenging', 'bad', 'terrible'];
-      const creativityWords = ['create', 'design', 'art', 'music', 'write', 'imagine', 'innovative'];
-      const analyticalWords = ['analyze', 'data', 'logic', 'research', 'study', 'calculate', 'solve'];
+      aiResponse = generateFallbackResponse(message);
       
-      const words = msg.toLowerCase().split(' ');
-      let sentiment = 0;
-      let creativity = 0;
-      let analytical = 0;
+      // Simple analysis fallback
+      const analyzeMessage = (msg) => {
+        const positiveWords = ['happy', 'excited', 'love', 'enjoy', 'great', 'amazing', 'wonderful', 'good', 'excellent'];
+        const negativeWords = ['sad', 'frustrated', 'hate', 'difficult', 'hard', 'challenging', 'bad', 'terrible'];
+        const creativityWords = ['create', 'design', 'art', 'music', 'write', 'imagine', 'innovative'];
+        const analyticalWords = ['analyze', 'data', 'logic', 'research', 'study', 'calculate', 'solve'];
+        
+        const words = msg.toLowerCase().split(' ');
+        let sentiment = 0;
+        let creativity = 0;
+        let analytical = 0;
 
-      words.forEach(word => {
-        if (positiveWords.includes(word)) sentiment += 0.1;
-        if (negativeWords.includes(word)) sentiment -= 0.1;
-        if (creativityWords.includes(word)) creativity += 0.1;
-        if (analyticalWords.includes(word)) analytical += 0.1;
-      });
+        words.forEach(word => {
+          if (positiveWords.includes(word)) sentiment += 0.1;
+          if (negativeWords.includes(word)) sentiment -= 0.1;
+          if (creativityWords.includes(word)) creativity += 0.1;
+          if (analyticalWords.includes(word)) analytical += 0.1;
+        });
 
-      return {
-        sentiment: Math.max(-1, Math.min(1, sentiment)),
-        emotions: {
-          joy: Math.max(0, sentiment),
-          sadness: Math.max(0, -sentiment),
-          engagement: Math.random() * 0.5 + 0.3
-        },
-        keywords: words.filter(word => word.length > 3).slice(0, 5),
-        detectedTraits: {
-          creativity: Math.max(0, Math.min(10, 5 + creativity * 10)),
-          analyticalThinking: Math.max(0, Math.min(10, 5 + analytical * 10))
-        }
+        return {
+          sentiment: Math.max(-1, Math.min(1, sentiment)),
+          emotions: {
+            joy: Math.max(0, sentiment),
+            sadness: Math.max(0, -sentiment),
+            engagement: Math.random() * 0.5 + 0.3
+          },
+          keywords: words.filter(word => word.length > 3).slice(0, 5),
+          detectedTraits: {
+            creativity: Math.max(0, Math.min(10, 5 + creativity * 10)),
+            analyticalThinking: Math.max(0, Math.min(10, 5 + analytical * 10))
+          }
+        };
       };
-    };
 
-    const analysis = analyzeMessage(message);
+      analysis = analyzeMessage(message);
+    }
+
+    // Extract detected traits from analysis
+    const detectedTraits = {};
+    if (analysis.detectedTraits) {
+      if (Array.isArray(analysis.detectedTraits)) {
+        analysis.detectedTraits.forEach(t => {
+          detectedTraits[t.trait] = t.value;
+        });
+      } else {
+        Object.assign(detectedTraits, analysis.detectedTraits);
+      }
+    }
 
     // Save conversation
     let conversation, profile;
@@ -582,17 +609,14 @@ app.post('/api/conversations/message', verifyToken, async (req, res) => {
       if (profile) {
         profile.conversationCount = (profile.conversationCount || 0) + 1;
         
-        // Update traits
-        if (analysis.detectedTraits.creativity) {
-          profile.behavioralTraits.creativity = Math.min(10, 
-            (profile.behavioralTraits.creativity * 0.9) + (analysis.detectedTraits.creativity * 0.1)
-          );
-        }
-        if (analysis.detectedTraits.analyticalThinking) {
-          profile.behavioralTraits.analyticalThinking = Math.min(10,
-            (profile.behavioralTraits.analyticalThinking * 0.9) + (analysis.detectedTraits.analyticalThinking * 0.1)
-          );
-        }
+        // Update traits from detected traits
+        Object.entries(detectedTraits).forEach(([trait, value]) => {
+          if (profile.behavioralTraits[trait] !== undefined) {
+            profile.behavioralTraits[trait] = Math.min(10, 
+              (profile.behavioralTraits[trait] * 0.9) + (value * 0.1)
+            );
+          }
+        });
         
         await memoryDB.updateUserProfile(req.user.userId, profile);
       }
@@ -610,17 +634,14 @@ app.post('/api/conversations/message', verifyToken, async (req, res) => {
       if (profile) {
         profile.conversationCount = (profile.conversationCount || 0) + 1;
         
-        // Update traits
-        if (analysis.detectedTraits.creativity) {
-          profile.behavioralTraits.creativity = Math.min(10, 
-            (profile.behavioralTraits.creativity * 0.9) + (analysis.detectedTraits.creativity * 0.1)
-          );
-        }
-        if (analysis.detectedTraits.analyticalThinking) {
-          profile.behavioralTraits.analyticalThinking = Math.min(10,
-            (profile.behavioralTraits.analyticalThinking * 0.9) + (analysis.detectedTraits.analyticalThinking * 0.1)
-          );
-        }
+        // Update traits from detected traits
+        Object.entries(detectedTraits).forEach(([trait, value]) => {
+          if (profile.behavioralTraits[trait] !== undefined) {
+            profile.behavioralTraits[trait] = Math.min(10, 
+              (profile.behavioralTraits[trait] * 0.9) + (value * 0.1)
+            );
+          }
+        });
         
         profile.updatedAt = new Date();
         await profile.save();
@@ -640,15 +661,16 @@ app.post('/api/conversations/message', verifyToken, async (req, res) => {
           sentiment: analysis.sentiment,
           emotions: analysis.emotions,
           keywords: analysis.keywords,
-          detectedTraits: Object.entries(analysis.detectedTraits).map(([trait, value]) => ({
+          detectedTraits: Object.entries(detectedTraits).map(([trait, value]) => ({
             trait,
-            value: parseFloat(value.toFixed(1))
+            value: parseFloat(Number(value).toFixed(1))
           }))
         },
-        updatedTraits: profile ? {
-          creativity: parseFloat(profile.behavioralTraits.creativity.toFixed(1)),
-          analyticalThinking: parseFloat(profile.behavioralTraits.analyticalThinking.toFixed(1))
-        } : {}
+        updatedTraits: profile ? Object.fromEntries(
+          Object.entries(profile.behavioralTraits).map(([k, v]) => 
+            [k, parseFloat(Number(v).toFixed(1))]
+          )
+        ) : {}
       }
     });
   } catch (error) {

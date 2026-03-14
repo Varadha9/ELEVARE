@@ -25,15 +25,16 @@ export default function Chat() {
     setLoading(true);
 
     try {
-      const { data } = await conversationAPI.sendMessage({
+      const response = await conversationAPI.sendMessage({
         message: input,
         conversationId
       });
 
-      setConversationId(data.conversationId);
+      const data = response.data.data || response.data;
+      
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: data.message,
+        content: data.conversation?.aiResponse || data.message || 'I\'m here to help!',
         timestamp: new Date(),
         analysis: data.analysis
       }]);
