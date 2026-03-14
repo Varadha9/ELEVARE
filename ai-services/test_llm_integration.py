@@ -150,9 +150,9 @@ def test_full_pipeline():
 
 def main():
     """Run all tests"""
-    print("\n" + "🚀"*30)
+    print("\n" + "="*60)
     print("ELEVARE LLM INTEGRATION TEST SUITE")
-    print("🚀"*30)
+    print("="*60)
     
     results = []
     
