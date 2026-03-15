@@ -45,3 +45,10 @@ coverage/
 # Production
 *.key
 *.pem
+
+# Research paper (local only)
+research-paper/
+research_paper/
+*.tex
+*.pdf
+*.bib
