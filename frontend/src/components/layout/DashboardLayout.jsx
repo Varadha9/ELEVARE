@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
-import { FloatingChat } from '../FloatingChat';
 import { Menu } from 'lucide-react';
 
 export function DashboardLayout({ children, title }) {
@@ -9,22 +8,24 @@ export function DashboardLayout({ children, title }) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile Menu Button */}
+      {/* Mobile menu toggle */}
       <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-4 left-4 z-50 lg:hidden p-2 bg-white rounded-lg shadow-lg"
+        onClick={() => setSidebarOpen(true)}
+        className="fixed top-4 left-4 z-50 lg:hidden p-2 bg-white rounded-xl shadow-md border border-gray-200 hover:bg-gray-50 transition-colors"
+        aria-label="Open menu"
       >
-        <Menu className="w-6 h-6" />
+        <Menu className="w-5 h-5 text-gray-700" />
       </button>
 
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="lg:ml-20">
+
+      {/* Main content — offset by collapsed sidebar width (w-20 = 5rem) on desktop */}
+      <div className="lg:ml-20 transition-all duration-300">
         <Navbar title={title} />
-        <main className="p-4 md:p-6">
+        <main className="p-4 md:p-6 max-w-screen-2xl">
           {children}
         </main>
       </div>
-      <FloatingChat />
     </div>
   );
 }
