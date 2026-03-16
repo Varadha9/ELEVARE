@@ -1,33 +1,43 @@
 import { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '../components/ui/Button';
-import { Send, Sparkles } from 'lucide-react';
+import { Send, Sparkles, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const MAX_CHARS = 500;
 
-function TypingDots() {
+function TypingIndicator({ slow }) {
   return (
-    <div className="flex gap-1 py-1">
-      {[0, 150, 300].map(delay => (
-        <div key={delay} className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
-      ))}
+    <div className="flex items-center gap-2">
+      {slow
+        ? <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+            <Clock className="w-3.5 h-3.5 animate-pulse" />
+            Still thinking… the AI is processing your response
+          </div>
+        : <div className="flex gap-1 py-1">
+            {[0, 150, 300].map(d => (
+              <div key={d} className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
+            ))}
+          </div>
+      }
     </div>
   );
 }
 
 export function Reflection() {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [messages, setMessages]       = useState([]);
+  const [input, setInput]             = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [slowResponse, setSlowResponse] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
+  const inputRef       = useRef(null);
+  const slowTimerRef   = useRef(null);
   const { user } = useAuth();
 
-  const userName = user?.user?.name || user?.name || 'there';
+  const userName    = user?.user?.name || user?.name || 'there';
   const userInitial = userName[0]?.toUpperCase() || 'U';
 
   useEffect(() => { fetchConversations(); }, []);
@@ -35,7 +45,7 @@ export function Reflection() {
 
   const fetchConversations = async () => {
     try {
-      const res = await api.get('/conversations/history');
+      const res   = await api.get('/conversations/history');
       const convs = res.data?.data?.conversations || [];
       if (convs.length === 0) {
         setMessages([{
@@ -67,11 +77,15 @@ export function Reflection() {
     setMessages(prev => [...prev, { role: 'user', content: text, timestamp: new Date() }]);
     setInput('');
     setLoading(true);
+    setSlowResponse(false);
+
+    // Show "still thinking" after 5s
+    slowTimerRef.current = setTimeout(() => setSlowResponse(true), 5000);
 
     try {
-      const res = await api.post('/conversations/message', { message: text });
-      const data = res.data?.data || res.data;
-      const aiText = data.conversation?.aiResponse || data.aiResponse || data.message;
+      const res     = await api.post('/conversations/message', { message: text });
+      const data    = res.data?.data || res.data;
+      const aiText  = data.conversation?.aiResponse || data.aiResponse || data.message;
       if (!aiText) throw new Error('No response');
       setMessages(prev => [...prev, { role: 'assistant', content: aiText, timestamp: new Date() }]);
     } catch {
@@ -81,7 +95,9 @@ export function Reflection() {
         timestamp: new Date(),
       }]);
     } finally {
+      clearTimeout(slowTimerRef.current);
       setLoading(false);
+      setSlowResponse(false);
       inputRef.current?.focus();
     }
   };
@@ -130,7 +146,6 @@ export function Reflection() {
                     transition={{ duration: 0.2 }}
                     className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
                   >
-                    {/* Avatar */}
                     <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${
                       msg.role === 'assistant'
                         ? 'bg-gradient-to-br from-primary to-indigo-700 text-white'
@@ -138,8 +153,6 @@ export function Reflection() {
                     }`}>
                       {msg.role === 'assistant' ? <Sparkles className="w-3.5 h-3.5" /> : userInitial}
                     </div>
-
-                    {/* Bubble */}
                     <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
                       msg.role === 'assistant'
                         ? 'bg-slate-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100 rounded-tl-sm'
@@ -159,7 +172,7 @@ export function Reflection() {
                       <Sparkles className="w-3.5 h-3.5 text-white" />
                     </div>
                     <div className="bg-slate-100 dark:bg-slate-700 rounded-2xl rounded-tl-sm px-4 py-2.5">
-                      <TypingDots />
+                      <TypingIndicator slow={slowResponse} />
                     </div>
                   </motion.div>
                 )}
@@ -199,7 +212,8 @@ export function Reflection() {
               </Button>
             </div>
             <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 pl-1">
-              Press <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-slate-600 rounded text-[10px]">Enter</kbd> to send · <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-slate-600 rounded text-[10px]">Shift+Enter</kbd> for new line
+              Press <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-slate-600 rounded text-[10px]">Enter</kbd> to send ·{' '}
+              <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-slate-600 rounded text-[10px]">Shift+Enter</kbd> for new line
             </p>
           </div>
         </div>
