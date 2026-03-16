@@ -2,27 +2,43 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
-import { Sparkles, Mail, Lock, User, Calendar, GraduationCap, AlertCircle, ArrowRight } from 'lucide-react';
+import { Sparkles, Mail, Lock, User, Calendar, GraduationCap, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+function PasswordStrength({ password }) {
+  const score = [/.{8,}/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter(r => r.test(password)).length;
+  const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+  const colors = ['', 'bg-red-400', 'bg-amber-400', 'bg-blue-400', 'bg-emerald-500'];
+  if (!password) return null;
+  return (
+    <div className="mt-1.5">
+      <div className="flex gap-1 mb-1">
+        {[1,2,3,4].map(i => (
+          <div key={i} className={`h-1 flex-1 rounded-full transition-all ${i <= score ? colors[score] : 'bg-gray-200'}`} />
+        ))}
+      </div>
+      <p className={`text-xs ${score <= 1 ? 'text-red-500' : score === 2 ? 'text-amber-500' : score === 3 ? 'text-blue-500' : 'text-emerald-600'}`}>
+        {labels[score]}
+      </p>
+    </div>
+  );
+}
+
 export function Register() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    age: '',
-    education: 'undergraduate'
-  });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', age: '', education: 'undergraduate' });
+  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  const set = (field) => (e) => setFormData(p => ({ ...p, [field]: e.target.value }));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (formData.password.length < 6) { setError('Password must be at least 6 characters'); return; }
     setLoading(true);
-
     try {
       await register(formData);
       navigate('/dashboard');
@@ -33,18 +49,18 @@ export function Register() {
     }
   };
 
+  const inputCls = 'w-full py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm';
+
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600">
         <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
-          <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
+          <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl animate-blob" />
+          <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000" />
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000" />
         </div>
       </div>
 
-      {/* Content */}
       <div className="relative min-h-screen flex items-center justify-center p-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -53,182 +69,109 @@ export function Register() {
           className="w-full max-w-md"
         >
           {/* Logo */}
-          <motion.div 
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-8"
-          >
-            <div className="inline-flex items-center gap-3 mb-4">
-              <div className="w-14 h-14 bg-white/10 backdrop-blur-lg rounded-2xl flex items-center justify-center border border-white/20 shadow-2xl">
-                <Sparkles className="w-8 h-8 text-white" />
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-white/15 backdrop-blur-lg rounded-2xl flex items-center justify-center border border-white/20">
+                <Sparkles className="w-7 h-7 text-white" />
               </div>
-              <span className="text-4xl font-bold text-white tracking-tight">ELEVARE</span>
+              <span className="text-3xl font-bold text-white tracking-tight">ELEVARE</span>
             </div>
-            <p className="text-white/90 text-lg">Begin Your Career Discovery Journey</p>
-          </motion.div>
+            <p className="text-white/80 text-sm">Begin Your Career Discovery Journey</p>
+          </div>
 
-          {/* Register Card */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20"
-          >
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
-              <p className="text-gray-600">Start discovering your perfect career</p>
+          {/* Card */}
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20">
+            <div className="text-center mb-7">
+              <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
+              <p className="text-gray-500 text-sm mt-1">Start discovering your perfect career</p>
             </div>
 
             {error && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700"
+                className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2.5 text-red-700"
               >
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span className="text-sm">{error}</span>
               </motion.div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Name */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-gray-900 placeholder-gray-400"
-                    placeholder="Enter your full name"
-                    required
-                  />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input type="text" value={formData.name} onChange={set('name')}
+                    className={`${inputCls} pl-10 pr-4`} placeholder="Your full name" required />
                 </div>
               </div>
 
+              {/* Email */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-gray-900 placeholder-gray-400"
-                    placeholder="Enter your email"
-                    required
-                  />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input type="email" value={formData.email} onChange={set('email')}
+                    className={`${inputCls} pl-10 pr-4`} placeholder="you@example.com" required />
                 </div>
               </div>
 
+              {/* Password */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-gray-900 placeholder-gray-400"
-                    placeholder="Create a strong password"
-                    required
-                  />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input type={showPw ? 'text' : 'password'} value={formData.password} onChange={set('password')}
+                    className={`${inputCls} pl-10 pr-10`} placeholder="Min. 6 characters" required />
+                  <button type="button" onClick={() => setShowPw(v => !v)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={showPw ? 'Hide password' : 'Show password'}>
+                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
+                <PasswordStrength password={formData.password} />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Age + Education */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Age</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Age</label>
                   <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="number"
-                      value={formData.age}
-                      onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                      className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-gray-900 placeholder-gray-400"
-                      placeholder="Age"
-                      required
-                      min="16"
-                      max="100"
-                    />
+                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input type="number" value={formData.age} onChange={set('age')}
+                      className={`${inputCls} pl-10 pr-2`} placeholder="Age" required min="16" max="100" />
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Education</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Education</label>
                   <div className="relative">
-                    <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
-                    <select
-                      value={formData.education}
-                      onChange={(e) => setFormData({ ...formData, education: e.target.value })}
-                      className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-gray-900 appearance-none bg-white cursor-pointer"
-                    >
-                      <option value="undergraduate">Undergraduate</option>
+                    <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
+                    <select value={formData.education} onChange={set('education')}
+                      className={`${inputCls} pl-10 pr-2 appearance-none bg-white cursor-pointer`}>
+                      <option value="undergraduate">Undergrad</option>
                       <option value="graduate">Graduate</option>
-                      <option value="postgraduate">Postgraduate</option>
+                      <option value="postgraduate">Postgrad</option>
                     </select>
                   </div>
                 </div>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full py-4 text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2" 
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Creating account...
-                  </>
-                ) : (
-                  <>
-                    Create Account
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
+              <Button type="submit" className="w-full py-3" loading={loading}>
+                {!loading && 'Create Account'}
               </Button>
             </form>
 
-            <div className="mt-8 text-center">
-              <p className="text-gray-600">
-                Already have an account?{' '}
-                <Link to="/login" className="text-primary font-semibold hover:text-primary-600 transition-colors">
-                  Sign In
-                </Link>
-              </p>
-            </div>
-          </motion.div>
+            <p className="text-center text-sm text-gray-500 mt-6">
+              Already have an account?{' '}
+              <Link to="/login" className="text-primary font-semibold hover:underline">Sign In</Link>
+            </p>
+          </div>
 
-          {/* Footer */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-center text-white/80 text-sm mt-8"
-          >
-            AI-powered career discovery platform
-          </motion.p>
+          <p className="text-center text-white/60 text-xs mt-6">AI-powered career discovery platform</p>
         </motion.div>
       </div>
-
-      <style>{`
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
     </div>
   );
 }
