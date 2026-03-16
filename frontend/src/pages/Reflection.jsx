@@ -1,203 +1,208 @@
 import { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Send, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+
+const MAX_CHARS = 500;
+
+function TypingDots() {
+  return (
+    <div className="flex gap-1 py-1">
+      {[0, 150, 300].map(delay => (
+        <div key={delay} className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+      ))}
+    </div>
+  );
+}
 
 export function Reflection() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    fetchConversations();
-  }, []);
+  const userName = user?.user?.name || user?.name || 'there';
+  const userInitial = userName[0]?.toUpperCase() || 'U';
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  useEffect(() => { fetchConversations(); }, []);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   const fetchConversations = async () => {
     try {
-      const response = await api.get('/conversations/history');
-      const convs = response.data?.data?.conversations || [];
-      const formatted = convs.flatMap(conv => [
-        { role: 'user', content: conv.userMessage, timestamp: conv.timestamp },
-        { role: 'assistant', content: conv.aiResponse, timestamp: conv.timestamp }
-      ]);
-      if (formatted.length === 0) {
+      const res = await api.get('/conversations/history');
+      const convs = res.data?.data?.conversations || [];
+      if (convs.length === 0) {
         setMessages([{
           role: 'assistant',
-          content: 'Hello! I\'m your AI career discovery assistant. Let\'s start by talking about what made you feel productive today. What activities did you enjoy?',
-          timestamp: new Date()
+          content: `Hello ${userName}! I'm your AI career discovery assistant. Let's start by talking about what made you feel productive or excited today. What activities did you enjoy?`,
+          timestamp: new Date(),
         }]);
       } else {
-        setMessages(formatted);
+        setMessages(convs.flatMap(c => [
+          { role: 'user',      content: c.userMessage, timestamp: c.timestamp },
+          { role: 'assistant', content: c.aiResponse,  timestamp: c.timestamp },
+        ]));
       }
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
+    } catch {
       setMessages([{
         role: 'assistant',
-        content: 'Hello! I\'m your AI career discovery assistant. What activities did you enjoy today?',
-        timestamp: new Date()
+        content: `Hello! I'm your AI career discovery assistant. What activities did you enjoy today?`,
+        timestamp: new Date(),
       }]);
+    } finally {
+      setInitializing(false);
     }
   };
 
   const handleSend = async () => {
-    if (!input.trim() || loading) return;
+    const text = input.trim();
+    if (!text || loading) return;
 
-    const userMessage = { role: 'user', content: input, timestamp: new Date() };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => [...prev, { role: 'user', content: text, timestamp: new Date() }]);
     setInput('');
     setLoading(true);
 
     try {
-      const response = await api.post('/conversations/message', { message: input });
-      
-      // Handle different response structures
-      const data = response.data.data || response.data;
-      const aiResponse = data.conversation?.aiResponse || data.aiResponse || data.message;
-      
-      if (!aiResponse) {
-        throw new Error('No AI response received');
-      }
-      
-      const aiMessage = {
-        role: 'assistant',
-        content: aiResponse,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      console.error('Full error:', error.response?.data || error.message);
+      const res = await api.post('/conversations/message', { message: text });
+      const data = res.data?.data || res.data;
+      const aiText = data.conversation?.aiResponse || data.aiResponse || data.message;
+      if (!aiText) throw new Error('No response');
+      setMessages(prev => [...prev, { role: 'assistant', content: aiText, timestamp: new Date() }]);
+    } catch {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date()
+        timestamp: new Date(),
       }]);
     } finally {
       setLoading(false);
+      inputRef.current?.focus();
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  };
+
+  const charsLeft = MAX_CHARS - input.length;
+
   return (
     <DashboardLayout title="AI Reflection">
-      <div className="max-w-4xl mx-auto h-[calc(100vh-12rem)]">
-        <Card className="h-full flex flex-col">
-          {/* Chat Header */}
-          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-purple-50">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-600 rounded-full flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">AI Career Assistant</h3>
-                <p className="text-sm text-gray-600">Reflecting on your journey</p>
+      <div className="max-w-3xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
+        <div className="flex-1 flex flex-col bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+
+          {/* Header */}
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-indigo-700 rounded-full flex items-center justify-center shadow-sm">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">AI Career Assistant</h3>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-emerald-400 rounded-full" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Online · Reflecting on your journey</p>
               </div>
             </div>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            <AnimatePresence>
-              {messages.map((message, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
-                >
-                  {/* Avatar */}
-                  <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${
-                    message.role === 'assistant' 
-                      ? 'bg-gradient-to-br from-primary to-primary-600' 
-                      : 'bg-gray-300'
-                  }`}>
-                    {message.role === 'assistant' ? (
-                      <Sparkles className="w-4 h-4 text-white" />
-                    ) : (
-                      <span className="text-white text-sm font-semibold">U</span>
-                    )}
-                  </div>
-
-                  {/* Message Bubble */}
-                  <div className={`max-w-[70%] rounded-2xl px-4 py-3 ${
-                    message.role === 'assistant'
-                      ? 'bg-gray-100 text-gray-900'
-                      : 'bg-primary text-white'
-                  }`}>
-                    <p className="text-sm leading-relaxed">{message.content}</p>
-                    <span className={`text-xs mt-1 block ${
-                      message.role === 'assistant' ? 'text-gray-500' : 'text-white/70'
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            {initializing ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center text-gray-400 dark:text-gray-500">
+                  <Sparkles className="w-8 h-8 mx-auto mb-2 animate-pulse" />
+                  <p className="text-sm">Loading your conversations...</p>
+                </div>
+              </div>
+            ) : (
+              <AnimatePresence initial={false}>
+                {messages.map((msg, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                  >
+                    {/* Avatar */}
+                    <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${
+                      msg.role === 'assistant'
+                        ? 'bg-gradient-to-br from-primary to-indigo-700 text-white'
+                        : 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
                     }`}>
-                      {new Date(message.timestamp).toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </span>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                      {msg.role === 'assistant' ? <Sparkles className="w-3.5 h-3.5" /> : userInitial}
+                    </div>
 
-            {/* Typing Indicator */}
-            {loading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex gap-3"
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-600 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-                <div className="bg-gray-100 rounded-2xl px-4 py-3">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                </div>
-              </motion.div>
+                    {/* Bubble */}
+                    <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                      msg.role === 'assistant'
+                        ? 'bg-slate-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100 rounded-tl-sm'
+                        : 'bg-primary text-white rounded-tr-sm'
+                    }`}>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      <p className={`text-[10px] mt-1 ${msg.role === 'assistant' ? 'text-gray-400 dark:text-gray-500' : 'text-white/60'}`}>
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+
+                {loading && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-indigo-700 flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <div className="bg-slate-100 dark:bg-slate-700 rounded-2xl rounded-tl-sm px-4 py-2.5">
+                      <TypingDots />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             )}
-
             <div ref={messagesEndRef} />
           </div>
 
           {/* Input */}
-          <div className="p-6 border-t border-gray-200 bg-gray-50">
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Share your thoughts..."
-                disabled={loading}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50"
-              />
+          <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+            <div className="flex gap-2 items-end">
+              <div className="flex-1 relative">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Share your thoughts… (Enter to send)"
+                  disabled={loading || initializing}
+                  rows={1}
+                  className="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 resize-none text-sm bg-white dark:bg-slate-700 dark:text-gray-100 dark:placeholder-gray-400"
+                  style={{ minHeight: '44px', maxHeight: '120px' }}
+                />
+                {input.length > MAX_CHARS * 0.8 && (
+                  <span className={`absolute right-3 bottom-2 text-[10px] ${charsLeft < 50 ? 'text-red-400' : 'text-gray-400'}`}>
+                    {charsLeft}
+                  </span>
+                )}
+              </div>
               <Button
                 onClick={handleSend}
-                disabled={!input.trim() || loading}
-                className="px-6"
+                disabled={!input.trim() || loading || initializing}
+                className="h-11 w-11 p-0 flex-shrink-0"
+                aria-label="Send message"
               >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Send className="w-5 h-5" />
-                )}
+                <Send className="w-4 h-4" />
               </Button>
             </div>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 pl-1">
+              Press <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-slate-600 rounded text-[10px]">Enter</kbd> to send · <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-slate-600 rounded text-[10px]">Shift+Enter</kbd> for new line
+            </p>
           </div>
-        </Card>
+        </div>
       </div>
     </DashboardLayout>
   );
