@@ -1,7 +1,10 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/ui/Toast';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { Loading } from './components/ui/Loading';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -12,41 +15,60 @@ import { Careers } from './pages/Careers';
 import { Ikigai } from './pages/Ikigai';
 import { Progress } from './pages/ProgressTracking';
 import { Settings } from './pages/Settings';
+import { NotFound } from './pages/NotFound';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
-  return user ? children : <Navigate to="/login" />;
+  return user ? children : <Navigate to="/login" replace />;
+}
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Public */}
+        <Route path="/"         element={<ErrorBoundary><Home /></ErrorBoundary>} />
+        <Route path="/login"    element={<ErrorBoundary><Login /></ErrorBoundary>} />
+        <Route path="/register" element={<ErrorBoundary><Register /></ErrorBoundary>} />
+
+        {/* Protected */}
+        <Route path="/dashboard"  element={<ProtectedRoute><ErrorBoundary><Dashboard /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/reflection" element={<ProtectedRoute><ErrorBoundary><Reflection /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/personality"element={<ProtectedRoute><ErrorBoundary><Personality /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/careers"    element={<ProtectedRoute><ErrorBoundary><Careers /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/ikigai"     element={<ProtectedRoute><ErrorBoundary><Ikigai /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/progress"   element={<ProtectedRoute><ErrorBoundary><Progress /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/settings"   element={<ProtectedRoute><ErrorBoundary><Settings /></ErrorBoundary></ProtectedRoute>} />
+
+        {/* 404 */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
+function AppContent() {
+  const { loading } = useAuth();
+
+  useEffect(() => {
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    if (darkMode) document.documentElement.classList.add('dark');
+  }, []);
+
+  if (loading) {
+    return <Loading fullScreen message="Starting ELEVARE..." />;
+  }
+
+  return <AnimatedRoutes />;
 }
 
 function App() {
-  useEffect(() => {
-    const darkMode = localStorage.getItem('darkMode') === 'true';
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
   return (
     <AuthProvider>
       <ToastProvider>
         <Router>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-
-            {/* Protected Routes */}
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/reflection" element={<ProtectedRoute><Reflection /></ProtectedRoute>} />
-            <Route path="/personality" element={<ProtectedRoute><Personality /></ProtectedRoute>} />
-            <Route path="/careers" element={<ProtectedRoute><Careers /></ProtectedRoute>} />
-            <Route path="/ikigai" element={<ProtectedRoute><Ikigai /></ProtectedRoute>} />
-            <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-
-            {/* Default Protected Route */}
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+          <AppContent />
         </Router>
       </ToastProvider>
     </AuthProvider>

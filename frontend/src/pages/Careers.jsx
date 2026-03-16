@@ -3,8 +3,9 @@ import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Loading } from '../components/ui/Loading';
-import { Briefcase, TrendingUp, CheckCircle, RefreshCw, MessageSquare } from 'lucide-react';
+import { SkeletonList } from '../components/ui/Skeleton';
+import { useToast } from '../components/ui/Toast';
+import { Briefcase, TrendingUp, CheckCircle, RefreshCw, MessageSquare, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -25,20 +26,21 @@ function MatchBar({ score }) {
 
 export function Careers() {
   const [recommendations, setRecommendations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
+  const [loading, setLoading]                 = useState(true);
+  const [generating, setGenerating]           = useState(false);
   const navigate = useNavigate();
+  const toast    = useToast();
 
   useEffect(() => { fetchRecommendations(); }, []);
 
   const fetchRecommendations = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/recommendations');
+      const res  = await api.get('/recommendations');
       const data = res.data?.data || res.data || [];
       setRecommendations(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('Error fetching recommendations:', err);
+    } catch {
+      toast.error('Failed to load recommendations');
     } finally {
       setLoading(false);
     }
@@ -49,14 +51,22 @@ export function Careers() {
     try {
       await api.post('/recommendations/generate');
       await fetchRecommendations();
-    } catch (err) {
-      console.error('Error generating recommendations:', err);
+      toast.success('Career recommendations updated!');
+    } catch {
+      toast.error('Failed to generate recommendations');
     } finally {
       setGenerating(false);
     }
   };
 
-  if (loading) return <DashboardLayout title="Career Insights"><Loading fullScreen message="Loading career matches..." /></DashboardLayout>;
+  if (loading) return (
+    <DashboardLayout title="Career Insights">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div className="h-28 bg-slate-200 dark:bg-slate-700 rounded-2xl animate-pulse" />
+        <SkeletonList rows={3} />
+      </div>
+    </DashboardLayout>
+  );
 
   return (
     <DashboardLayout title="Career Insights">
@@ -70,12 +80,7 @@ export function Careers() {
                 <h2 className="text-2xl font-bold mb-1">Your Career Matches</h2>
                 <p className="text-white/80 text-sm">AI-powered recommendations based on your behavioral profile</p>
               </div>
-              <Button
-                onClick={generateRecommendations}
-                loading={generating}
-                variant="secondary"
-                icon={RefreshCw}
-              >
+              <Button onClick={generateRecommendations} loading={generating} variant="secondary" icon={RefreshCw}>
                 {!generating && 'Refresh'}
               </Button>
             </div>
@@ -104,8 +109,10 @@ export function Careers() {
         {/* Career cards */}
         <div className="space-y-4">
           {recommendations.map((rec, idx) => {
-            const score = Math.round(rec.confidenceScore || rec.score || 0);
+            const score        = Math.round(rec.confidenceScore || rec.score || 0);
             const scoreVariant = score >= 80 ? 'success' : score >= 60 ? 'default' : 'warning';
+            const isBest       = idx === 0;
+
             return (
               <motion.div
                 key={idx}
@@ -113,12 +120,20 @@ export function Careers() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.08 }}
               >
-                <Card hover>
+                <Card hover className={isBest ? 'ring-2 ring-amber-400 dark:ring-amber-500' : ''}>
                   <CardContent className="p-6">
+                    {/* Best match banner */}
+                    {isBest && (
+                      <div className="flex items-center gap-1.5 mb-3 text-amber-600 dark:text-amber-400">
+                        <Crown className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-wide">Best Match</span>
+                      </div>
+                    )}
+
                     {/* Top row */}
                     <div className="flex items-start gap-4 mb-4">
-                      <div className="w-14 h-14 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Briefcase className="w-7 h-7 text-primary" />
+                      <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${isBest ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-indigo-100 dark:bg-indigo-900/30'}`}>
+                        <Briefcase className={`w-7 h-7 ${isBest ? 'text-amber-600 dark:text-amber-400' : 'text-primary'}`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -126,13 +141,9 @@ export function Careers() {
                             <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                               {rec.careerTitle || rec.title}
                             </h3>
-                            {rec.category && (
-                              <p className="text-sm text-gray-500 dark:text-gray-400">{rec.category}</p>
-                            )}
+                            {rec.category && <p className="text-sm text-gray-500 dark:text-gray-400">{rec.category}</p>}
                           </div>
-                          <div className="text-right flex-shrink-0">
-                            <Badge variant={scoreVariant} className="text-sm px-3 py-1">{score}% match</Badge>
-                          </div>
+                          <Badge variant={scoreVariant} className="text-sm px-3 py-1 flex-shrink-0">{score}% match</Badge>
                         </div>
                         <div className="mt-2">
                           <MatchBar score={score} />
@@ -140,7 +151,7 @@ export function Careers() {
                       </div>
                     </div>
 
-                    {/* Details grid */}
+                    {/* Details */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
                         <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5 mb-2">
@@ -157,7 +168,6 @@ export function Careers() {
                           </div>
                         )}
                       </div>
-
                       <div>
                         <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5 mb-2">
                           <TrendingUp className="w-4 h-4 text-primary" /> Key Skills Required
