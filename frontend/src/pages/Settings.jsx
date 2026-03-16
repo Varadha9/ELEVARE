@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Moon, Sun, Bell, Lock, Trash2, User, Mail, Download, Shield, Eye, EyeOff, Save, CheckCircle, XCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { useToast } from '../components/ui/Toast';
+import { Moon, Sun, Bell, Lock, Trash2, User, Mail, Download, Shield, Eye, EyeOff, Save } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -31,40 +33,22 @@ function Toggle({ enabled, onChange, label, description }) {
   );
 }
 
-function StatusBanner({ message, type, onDismiss }) {
-  if (!message) return null;
-  const styles = {
-    success: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-    error:   'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
-    info:    'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-  };
-  const Icon = type === 'success' ? CheckCircle : XCircle;
-  return (
-    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-      className={`p-3.5 rounded-xl border flex items-center gap-2.5 ${styles[type]}`}>
-      <Icon className="w-4 h-4 flex-shrink-0" />
-      <span className="text-sm font-medium flex-1">{message}</span>
-      <button onClick={onDismiss} className="opacity-60 hover:opacity-100 text-lg leading-none">×</button>
-    </motion.div>
-  );
-}
-
 const inputCls = 'w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm bg-white dark:bg-slate-700 dark:text-gray-100';
 
 export function Settings() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
 
-  const [darkMode, setDarkMode]     = useState(() => document.documentElement.classList.contains('dark'));
-  const [notifs, setNotifs]         = useState(() => localStorage.getItem('notifications') !== 'false');
+  const [darkMode, setDarkMode]       = useState(() => document.documentElement.classList.contains('dark'));
+  const [notifs, setNotifs]           = useState(() => localStorage.getItem('notifications') !== 'false');
   const [emailNotifs, setEmailNotifs] = useState(() => localStorage.getItem('emailNotifications') !== 'false');
-  const [profile, setProfile]       = useState({ name: user?.user?.name || user?.name || '', email: user?.user?.email || user?.email || '' });
-  const [passwords, setPasswords]   = useState({ current: '', new: '', confirm: '' });
-  const [showPw, setShowPw]         = useState(false);
-  const [loading, setLoading]       = useState(false);
-  const [status, setStatus]         = useState({ text: '', type: '' });
+  const [profile, setProfile]         = useState({ name: user?.user?.name || user?.name || '', email: user?.user?.email || user?.email || '' });
+  const [passwords, setPasswords]     = useState({ current: '', new: '', confirm: '' });
+  const [showPw, setShowPw]           = useState(false);
+  const [loading, setLoading]         = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  /* Dark mode — toggle CSS class on <html> */
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
     else          document.documentElement.classList.remove('dark');
@@ -76,64 +60,55 @@ export function Settings() {
     localStorage.setItem('emailNotifications', emailNotifs);
   }, [notifs, emailNotifs]);
 
-  const flash = (text, type = 'success') => {
-    setStatus({ text, type });
-    setTimeout(() => setStatus({ text: '', type: '' }), 4000);
-  };
-
   const saveProfile = async () => {
-    if (!profile.name.trim()) { flash('Name cannot be empty', 'error'); return; }
+    if (!profile.name.trim()) { toast.error('Name cannot be empty'); return; }
     setLoading(true);
     try {
       await api.put('/profile', profile);
-      flash('Profile updated successfully!');
+      toast.success('Profile updated successfully!');
     } catch (err) {
-      flash(err.response?.data?.message || 'Error updating profile', 'error');
+      toast.error(err.response?.data?.message || 'Error updating profile');
     } finally { setLoading(false); }
   };
 
   const changePassword = async () => {
-    if (!passwords.current || !passwords.new || !passwords.confirm) { flash('All fields are required', 'error'); return; }
-    if (passwords.new.length < 6) { flash('New password must be at least 6 characters', 'error'); return; }
-    if (passwords.new !== passwords.confirm) { flash('Passwords do not match', 'error'); return; }
+    if (!passwords.current || !passwords.new || !passwords.confirm) { toast.error('All fields are required'); return; }
+    if (passwords.new.length < 6) { toast.error('New password must be at least 6 characters'); return; }
+    if (passwords.new !== passwords.confirm) { toast.error('Passwords do not match'); return; }
     setLoading(true);
     try {
       await api.put('/auth/change-password', { currentPassword: passwords.current, newPassword: passwords.new });
-      flash('Password changed successfully!');
+      toast.success('Password changed successfully!');
       setPasswords({ current: '', new: '', confirm: '' });
     } catch (err) {
-      flash(err.response?.data?.message || 'Error changing password', 'error');
+      toast.error(err.response?.data?.message || 'Error changing password');
     } finally { setLoading(false); }
   };
 
   const exportData = async () => {
     try {
-      const res = await api.get('/profile/export');
+      const res  = await api.get('/profile/export');
       const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href = url; a.download = `elevare-data-${new Date().toISOString().split('T')[0]}.json`;
       a.click(); URL.revokeObjectURL(url);
-      flash('Data exported!');
-    } catch { flash('Error exporting data', 'error'); }
+      toast.success('Data exported!');
+    } catch { toast.error('Error exporting data'); }
   };
 
   const deleteAccount = async () => {
-    if (!window.confirm('Permanently delete your account and all data? This cannot be undone.')) return;
-    if (window.prompt('Type DELETE to confirm:') !== 'DELETE') { flash('Cancelled', 'info'); return; }
+    setConfirmOpen(false);
     try {
       await api.delete('/auth/account');
-      logout(); navigate('/');
-    } catch { flash('Error deleting account', 'error'); }
+      toast.success('Account deleted');
+      setTimeout(() => { logout(); navigate('/'); }, 1500);
+    } catch { toast.error('Error deleting account'); }
   };
 
   return (
     <DashboardLayout title="Settings">
       <div className="max-w-2xl mx-auto space-y-5">
-
-        <AnimatePresence>
-          {status.text && <StatusBanner message={status.text} type={status.type} onDismiss={() => setStatus({ text: '', type: '' })} />}
-        </AnimatePresence>
 
         {/* Account */}
         <Card>
@@ -249,11 +224,25 @@ export function Settings() {
               <p className="text-xs text-red-700 dark:text-red-300 mb-3">
                 Permanently deletes your account and all data. Cannot be undone.
               </p>
-              <Button variant="danger" size="sm" onClick={deleteAccount} icon={Trash2}>Delete Account</Button>
+              <Button variant="danger" size="sm" onClick={() => setConfirmOpen(true)} icon={Trash2}>
+                Delete Account
+              </Button>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirm delete modal */}
+      <ConfirmModal
+        open={confirmOpen}
+        title="Delete Account"
+        message="This will permanently delete your account, all conversations, behavioral data, and career recommendations. This action cannot be undone."
+        confirmLabel="Yes, Delete Forever"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={deleteAccount}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </DashboardLayout>
   );
 }
