@@ -37,40 +37,62 @@ class BehavioralAnalyzer:
         """Map behavioral traits to Ikigai dimensions"""
         traits = user_profile.get('behavioralTraits', {})
         personality = user_profile.get('personality', {})
-        
+
+        # Traits are stored 0-10, personality 0-1
+        def t(key): return traits.get(key, 5.0)
+        def p(key): return personality.get(key, 0.5)
+
         ikigai = {
-            'loves': [],
-            'goodAt': [],
-            'worldNeeds': [],
-            'paidFor': []
+            'whatYouLove': [],
+            'whatYouAreGoodAt': [],
+            'whatTheWorldNeeds': [],
+            'whatYouCanBePaidFor': []
         }
-        
-        # What user loves (based on interests and openness)
-        if personality.get('openness', 50) > 60:
-            ikigai['loves'].extend(['creative work', 'learning', 'exploration'])
-        if traits.get('creativity', 50) > 60:
-            ikigai['loves'].append('artistic expression')
-        
-        # What user is good at (based on strong traits)
-        if traits.get('analyticalThinking', 50) > 65:
-            ikigai['goodAt'].append('analytical problem solving')
-        if traits.get('communication', 50) > 65:
-            ikigai['goodAt'].append('communication and presentation')
-        if traits.get('leadership', 50) > 65:
-            ikigai['goodAt'].append('leadership and management')
-        
-        # What world needs (based on empathy and social traits)
-        if traits.get('empathy', 50) > 60:
-            ikigai['worldNeeds'].extend(['healthcare', 'education', 'social services'])
-        if personality.get('agreeableness', 50) > 60:
-            ikigai['worldNeeds'].append('community building')
-        
-        # What can be paid for (marketable skills)
-        if traits.get('problemSolving', 50) > 60:
-            ikigai['paidFor'].append('technical expertise')
-        if traits.get('analyticalThinking', 50) > 60:
-            ikigai['paidFor'].append('data analysis')
-        
+
+        # What you love
+        if p('openness') > 0.6:
+            ikigai['whatYouLove'].extend(['creative work', 'learning new things'])
+        if t('creativity') > 6:
+            ikigai['whatYouLove'].append('artistic expression')
+        if t('empathy') > 6:
+            ikigai['whatYouLove'].append('helping others')
+        if t('leadership') > 6:
+            ikigai['whatYouLove'].append('leading and inspiring people')
+
+        # What you are good at
+        if t('analyticalThinking') > 6.5:
+            ikigai['whatYouAreGoodAt'].append('analytical problem solving')
+        if t('communication') > 6.5:
+            ikigai['whatYouAreGoodAt'].append('communication and presentation')
+        if t('leadership') > 6.5:
+            ikigai['whatYouAreGoodAt'].append('leadership and management')
+        if t('creativity') > 6.5:
+            ikigai['whatYouAreGoodAt'].append('creative thinking')
+        if t('problemSolving') > 6.5:
+            ikigai['whatYouAreGoodAt'].append('solving complex problems')
+
+        # What the world needs
+        if t('empathy') > 6:
+            ikigai['whatTheWorldNeeds'].extend(['healthcare', 'education'])
+        if p('agreeableness') > 0.6:
+            ikigai['whatTheWorldNeeds'].append('community building')
+        if t('analyticalThinking') > 6:
+            ikigai['whatTheWorldNeeds'].append('data-driven solutions')
+        if t('creativity') > 6:
+            ikigai['whatTheWorldNeeds'].append('innovative design')
+
+        # What you can be paid for
+        if t('problemSolving') > 6:
+            ikigai['whatYouCanBePaidFor'].append('technical expertise')
+        if t('analyticalThinking') > 6:
+            ikigai['whatYouCanBePaidFor'].append('data analysis')
+        if t('communication') > 6:
+            ikigai['whatYouCanBePaidFor'].append('consulting and advising')
+        if t('leadership') > 6:
+            ikigai['whatYouCanBePaidFor'].append('management roles')
+        if t('creativity') > 6:
+            ikigai['whatYouCanBePaidFor'].append('design and creative services')
+
         return ikigai
     
     def get_dominant_traits(self, traits, top_n=5):
