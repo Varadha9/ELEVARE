@@ -86,17 +86,16 @@ async def process_message(request: ProcessMessageRequest):
         # Update Ikigai
         interests = user_profile.get('interests', [])
         updated_ikigai = behavioral_analyzer.calculate_ikigai_alignment(
-            user_profile, 
+            user_profile,
             interests
         )
-        
-        # Prepare trait updates
-        trait_updates = {
+
+        # Save all updates to database
+        db_manager.update_user_profile(parse_user_id(request.userId), {
             'behavioralTraits': updated_traits,
             'personality': updated_personality,
-            'ikigai': updated_ikigai,
-            'updatedAt': None  # Will be set by MongoDB
-        }
+            'ikigai': updated_ikigai
+        })
         
         # Generate AI response with LLM
         response = conversational_agent.generate_response(
@@ -116,7 +115,11 @@ async def process_message(request: ProcessMessageRequest):
                     {"trait": k, "value": v} for k, v in detected_traits.items()
                 ]
             },
-            "traitUpdates": trait_updates
+            "traitUpdates": {
+                "behavioralTraits": updated_traits,
+                "personality": updated_personality,
+                "ikigai": updated_ikigai
+            }
         }
         
     except Exception as e:
