@@ -53,10 +53,10 @@ function Toast({ message, type, onClose }) {
   };
 
   const colors = {
-    success: 'bg-green-50 border-green-200',
-    error: 'bg-red-50 border-red-200',
-    warning: 'bg-yellow-50 border-yellow-200',
-    info: 'bg-blue-50 border-blue-200',
+    success: 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800',
+    error:   'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800',
+    warning: 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800',
+    info:    'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800',
   };
 
   return (
@@ -67,7 +67,7 @@ function Toast({ message, type, onClose }) {
       className={`flex items-center gap-3 p-4 rounded-xl border shadow-lg min-w-[300px] max-w-md ${colors[type]}`}
     >
       {icons[type]}
-      <p className="flex-1 text-sm font-medium text-gray-900">{message}</p>
+      <p className="flex-1 text-sm font-medium text-gray-900 dark:text-gray-100">{message}</p>
       <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
         <X className="w-4 h-4" />
       </button>

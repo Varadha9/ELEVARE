@@ -37,6 +37,7 @@ ai-services/models/cache/
 logs/
 *.log
 npm-debug.log*
+backend/backend.log
 
 # Testing
 coverage/

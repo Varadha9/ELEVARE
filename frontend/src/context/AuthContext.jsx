@@ -25,9 +25,6 @@ export const AuthProvider = ({ children }) => {
   const loadUser = async () => {
     try {
       const response = await authAPI.getProfile();
-      console.log('Profile response:', response.data);
-      
-      // Handle the response structure from backend
       if (response.data.success && response.data.data) {
         setUser(response.data.data);
       } else {
@@ -44,15 +41,11 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      console.log('Attempting login with:', credentials);
       const response = await authAPI.login(credentials);
-      console.log('Login response:', response.data);
-      
-      // Handle the response structure from backend
       if (response.data.success && response.data.data) {
         const { user, token } = response.data.data;
         localStorage.setItem('token', token);
-        setUser({ user }); // Wrap user in expected structure
+        setUser({ user });
         return response.data;
       } else {
         throw new Error(response.data.error?.message || 'Login failed');
@@ -69,15 +62,11 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      console.log('Attempting registration with:', userData);
       const response = await authAPI.register(userData);
-      console.log('Registration response:', response.data);
-      
-      // Handle the response structure from backend
       if (response.data.success && response.data.data) {
         const { user, token } = response.data.data;
         localStorage.setItem('token', token);
-        setUser({ user }); // Wrap user in expected structure
+        setUser({ user });
         return response.data;
       } else {
         throw new Error(response.data.error?.message || 'Registration failed');
