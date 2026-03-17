@@ -4,3 +4,8 @@ export { Progress } from './Progress';
 export { Badge } from './Badge';
 export { Loading } from './Loading';
 export { ToastProvider, useToast } from './Toast';
+export { ConfirmModal } from './ConfirmModal';
+export { Tooltip } from './Tooltip';
+export { Skeleton, SkeletonCard, SkeletonDashboard, SkeletonList } from './Skeleton';
+export { PageTransition } from './PageTransition';
+export { ErrorBoundary } from './ErrorBoundary';
