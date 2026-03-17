@@ -1,7 +1,4 @@
 import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -52,7 +49,7 @@ if (!USE_MEMORY_DB) {
       },
       ikigai: {
         whatYouLove: [String],
-        whatYoureGoodAt: [String],
+        whatYouAreGoodAt: [String],
         whatTheWorldNeeds: [String],
         whatYouCanBePaidFor: [String]
       },
@@ -206,7 +203,7 @@ const createInitialProfile = (userId) => ({
   },
   ikigai: {
     whatYouLove: [],
-    whatYoureGoodAt: [],
+    whatYouAreGoodAt: [],
     whatTheWorldNeeds: [],
     whatYouCanBePaidFor: []
   },
@@ -238,6 +235,10 @@ const verifyToken = (req, res, next) => {
 
 // Routes
 app.get('/', (req, res) => {
+    const calcStreak = (convs) => { if (!convs || convs.length === 0) return 0; const days = [...new Set(convs.map(c => new Date(c.timestamp).toDateString()))]; let s = 0; const t = new Date(); for (let j = 0; j < days.length; j++) { const e = new Date(t); e.setDate(t.getDate() - j); if (days[j] === e.toDateString()) s++; else break; } return s; };
+    let _convs = USE_MEMORY_DB ? (await memoryDB.getUserConversations(req.user.userId, 100)) : (await Conversation.find({ userId: req.user.userId }).sort({ timestamp: -1 }));
+    const _profile = profile || createInitialProfile(req.user.userId);
+    _profile.streak = calcStreak(_convs);
   res.json({
     message: 'ELEVARE Backend API',
     version: '1.2.0',
@@ -249,6 +250,10 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
+    const calcStreak = (convs) => { if (!convs || convs.length === 0) return 0; const days = [...new Set(convs.map(c => new Date(c.timestamp).toDateString()))]; let s = 0; const t = new Date(); for (let j = 0; j < days.length; j++) { const e = new Date(t); e.setDate(t.getDate() - j); if (days[j] === e.toDateString()) s++; else break; } return s; };
+    let _convs = USE_MEMORY_DB ? (await memoryDB.getUserConversations(req.user.userId, 100)) : (await Conversation.find({ userId: req.user.userId }).sort({ timestamp: -1 }));
+    const _profile = profile || createInitialProfile(req.user.userId);
+    _profile.streak = calcStreak(_convs);
   res.json({
     status: 'healthy',
     database: USE_MEMORY_DB ? 'in-memory' : 'mongodb',
@@ -400,6 +405,10 @@ app.post('/api/auth/login', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
+    const calcStreak = (convs) => { if (!convs || convs.length === 0) return 0; const days = [...new Set(convs.map(c => new Date(c.timestamp).toDateString()))]; let s = 0; const t = new Date(); for (let j = 0; j < days.length; j++) { const e = new Date(t); e.setDate(t.getDate() - j); if (days[j] === e.toDateString()) s++; else break; } return s; };
+    let _convs = USE_MEMORY_DB ? (await memoryDB.getUserConversations(req.user.userId, 100)) : (await Conversation.find({ userId: req.user.userId }).sort({ timestamp: -1 }));
+    const _profile = profile || createInitialProfile(req.user.userId);
+    _profile.streak = calcStreak(_convs);
     res.json({
       success: true,
       message: 'Login successful',
@@ -428,7 +437,6 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/profile', verifyToken, async (req, res) => {
   try {
     let user, profile;
-
     if (USE_MEMORY_DB) {
       user = await memoryDB.findUserById(req.user.userId);
       profile = await memoryDB.findUserProfile(req.user.userId);
@@ -436,34 +444,34 @@ app.get('/api/profile', verifyToken, async (req, res) => {
       user = await User.findById(req.user.userId);
       profile = await UserProfile.findOne({ userId: req.user.userId });
     }
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: { message: 'User not found' }
-      });
-    }
+    if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } });
+
+    const calcStreak = (convs) => {
+      if (!convs || convs.length === 0) return 0;
+      const days = [...new Set(convs.map(c => new Date(c.timestamp).toDateString()))];
+      let s = 0; const t = new Date();
+      for (let j = 0; j < days.length; j++) {
+        const e = new Date(t); e.setDate(t.getDate() - j);
+        if (days[j] === e.toDateString()) s++; else break;
+      }
+      return s;
+    };
+    let _convs = USE_MEMORY_DB
+      ? (await memoryDB.getUserConversations(req.user.userId, 100))
+      : (await Conversation.find({ userId: req.user.userId }).sort({ timestamp: -1 }));
+    const _profile = profile || createInitialProfile(req.user.userId);
+    _profile.streak = calcStreak(_convs);
 
     res.json({
       success: true,
       data: {
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          age: user.age,
-          education: user.education,
-          createdAt: user.createdAt
-        },
-        profile: profile || createInitialProfile(req.user.userId)
+        user: { id: user._id, name: user.name, email: user.email, age: user.age, education: user.education, createdAt: user.createdAt },
+        profile: _profile
       }
     });
   } catch (error) {
     console.error('Profile error:', error);
-    res.status(500).json({
-      success: false,
-      error: { message: 'Internal server error' }
-    });
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
   }
 });
 
@@ -873,6 +881,102 @@ app.post('/api/recommendations/generate', verifyToken, async (req, res) => {
       success: false,
       error: { message: 'Internal server error' }
     });
+  }
+});
+
+// PUT /api/profile — update name/email
+app.put('/api/profile', verifyToken, async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    if (!name || !email) return res.status(400).json({ success: false, error: { message: 'Name and email are required' } });
+
+    if (USE_MEMORY_DB) {
+      const user = await memoryDB.findUserById(req.user.userId);
+      if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } });
+      user.name = name; user.email = email;
+      memoryDB.users.set(req.user.userId, user);
+    } else {
+      await User.findByIdAndUpdate(req.user.userId, { name, email });
+    }
+    res.json({ success: true, message: 'Profile updated successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+  }
+});
+
+// PUT /api/auth/change-password
+app.put('/api/auth/change-password', verifyToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return res.status(400).json({ success: false, error: { message: 'Both passwords are required' } });
+    if (newPassword.length < 6) return res.status(400).json({ success: false, error: { message: 'New password must be at least 6 characters' } });
+
+    let user;
+    if (USE_MEMORY_DB) {
+      user = await memoryDB.findUserById(req.user.userId);
+    } else {
+      user = await User.findById(req.user.userId);
+    }
+    if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } });
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) return res.status(401).json({ success: false, error: { message: 'Current password is incorrect' } });
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+    if (USE_MEMORY_DB) {
+      user.password = hashed;
+      memoryDB.users.set(req.user.userId, user);
+    } else {
+      await User.findByIdAndUpdate(req.user.userId, { password: hashed });
+    }
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+  }
+});
+
+// GET /api/profile/export
+app.get('/api/profile/export', verifyToken, async (req, res) => {
+  try {
+    let user, profile, conversations;
+    if (USE_MEMORY_DB) {
+      user = await memoryDB.findUserById(req.user.userId);
+      profile = await memoryDB.findUserProfile(req.user.userId);
+      conversations = await memoryDB.getUserConversations(req.user.userId, 100);
+    } else {
+      user = await User.findById(req.user.userId).select('-password');
+      profile = await UserProfile.findOne({ userId: req.user.userId });
+      conversations = await Conversation.find({ userId: req.user.userId }).sort({ timestamp: -1 }).limit(100);
+    }
+    res.json({
+      success: true,
+      data: {
+        exportedAt: new Date().toISOString(),
+        user: { name: user?.name, email: user?.email, age: user?.age, education: user?.education, createdAt: user?.createdAt },
+        profile: profile,
+        conversations: conversations
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+  }
+});
+
+// DELETE /api/auth/account
+app.delete('/api/auth/account', verifyToken, async (req, res) => {
+  try {
+    if (USE_MEMORY_DB) {
+      memoryDB.users.delete(req.user.userId);
+      memoryDB.userProfiles.delete(req.user.userId);
+      memoryDB.conversations.delete(req.user.userId);
+    } else {
+      await User.findByIdAndDelete(req.user.userId);
+      await UserProfile.findOneAndDelete({ userId: req.user.userId });
+      await Conversation.deleteMany({ userId: req.user.userId });
+    }
+    res.json({ success: true, message: 'Account deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
   }
 });
 
