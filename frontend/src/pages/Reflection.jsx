@@ -41,7 +41,9 @@ export function Reflection() {
   const userInitial = userName[0]?.toUpperCase() || 'U';
 
   useEffect(() => { fetchConversations(); }, []);
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => {
+    if (!initializing) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, initializing]);
 
   const fetchConversations = async () => {
     try {
@@ -54,7 +56,8 @@ export function Reflection() {
           timestamp: new Date(),
         }]);
       } else {
-        setMessages(convs.flatMap(c => [
+        const sorted = [...convs].reverse();
+        setMessages(sorted.flatMap(c => [
           { role: 'user',      content: c.userMessage, timestamp: c.timestamp },
           { role: 'assistant', content: c.aiResponse,  timestamp: c.timestamp },
         ]));
