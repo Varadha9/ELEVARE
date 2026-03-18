@@ -1,4 +1,7 @@
 import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -235,10 +238,6 @@ const verifyToken = (req, res, next) => {
 
 // Routes
 app.get('/', (req, res) => {
-    const calcStreak = (convs) => { if (!convs || convs.length === 0) return 0; const days = [...new Set(convs.map(c => new Date(c.timestamp).toDateString()))]; let s = 0; const t = new Date(); for (let j = 0; j < days.length; j++) { const e = new Date(t); e.setDate(t.getDate() - j); if (days[j] === e.toDateString()) s++; else break; } return s; };
-    let _convs = USE_MEMORY_DB ? (await memoryDB.getUserConversations(req.user.userId, 100)) : (await Conversation.find({ userId: req.user.userId }).sort({ timestamp: -1 }));
-    const _profile = profile || createInitialProfile(req.user.userId);
-    _profile.streak = calcStreak(_convs);
   res.json({
     message: 'ELEVARE Backend API',
     version: '1.2.0',
@@ -250,10 +249,6 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-    const calcStreak = (convs) => { if (!convs || convs.length === 0) return 0; const days = [...new Set(convs.map(c => new Date(c.timestamp).toDateString()))]; let s = 0; const t = new Date(); for (let j = 0; j < days.length; j++) { const e = new Date(t); e.setDate(t.getDate() - j); if (days[j] === e.toDateString()) s++; else break; } return s; };
-    let _convs = USE_MEMORY_DB ? (await memoryDB.getUserConversations(req.user.userId, 100)) : (await Conversation.find({ userId: req.user.userId }).sort({ timestamp: -1 }));
-    const _profile = profile || createInitialProfile(req.user.userId);
-    _profile.streak = calcStreak(_convs);
   res.json({
     status: 'healthy',
     database: USE_MEMORY_DB ? 'in-memory' : 'mongodb',
@@ -405,10 +400,6 @@ app.post('/api/auth/login', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
-    const calcStreak = (convs) => { if (!convs || convs.length === 0) return 0; const days = [...new Set(convs.map(c => new Date(c.timestamp).toDateString()))]; let s = 0; const t = new Date(); for (let j = 0; j < days.length; j++) { const e = new Date(t); e.setDate(t.getDate() - j); if (days[j] === e.toDateString()) s++; else break; } return s; };
-    let _convs = USE_MEMORY_DB ? (await memoryDB.getUserConversations(req.user.userId, 100)) : (await Conversation.find({ userId: req.user.userId }).sort({ timestamp: -1 }));
-    const _profile = profile || createInitialProfile(req.user.userId);
-    _profile.streak = calcStreak(_convs);
     res.json({
       success: true,
       message: 'Login successful',
@@ -456,7 +447,7 @@ app.get('/api/profile', verifyToken, async (req, res) => {
       }
       return s;
     };
-    let _convs = USE_MEMORY_DB
+    const _convs = USE_MEMORY_DB
       ? (await memoryDB.getUserConversations(req.user.userId, 100))
       : (await Conversation.find({ userId: req.user.userId }).sort({ timestamp: -1 }));
     const _profile = profile || createInitialProfile(req.user.userId);
