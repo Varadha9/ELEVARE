@@ -1,15 +1,30 @@
 import re
+import json
+import os
 import nltk
 from textblob import TextBlob
 
+_DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
+
+def _load_json(filename):
+    path = os.path.join(_DATA_DIR, filename)
+    if os.path.exists(path):
+        with open(path, encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
 class NLPProcessor:
     def __init__(self):
-        # Download required NLTK data
         try:
             nltk.data.find('tokenizers/punkt')
         except LookupError:
             nltk.download('punkt', quiet=True)
             nltk.download('stopwords', quiet=True)
+
+        # Load emotion data from Kaggle emotion detection dataset
+        _emotion_data = _load_json('emotion_keywords.json')
+        self._emotion_keywords = _emotion_data.get('keyword_signals', {})
+        self._emotion_trait_signals = _emotion_data.get('trait_signals', {})
         
         # Trait keywords mapping
         self.trait_keywords = {
@@ -49,27 +64,18 @@ class NLPProcessor:
         return keywords[:10]
     
     def detect_emotions(self, text):
-        """Detect emotions using simple keyword matching"""
-        emotions = {
-            'joy': ['happy', 'excited', 'great', 'wonderful', 'love', 'enjoy'],
-            'sadness': ['sad', 'unhappy', 'depressed', 'down', 'disappointed'],
-            'anger': ['angry', 'mad', 'frustrated', 'annoyed', 'irritated'],
-            'fear': ['afraid', 'scared', 'worried', 'anxious', 'nervous'],
-            'surprise': ['surprised', 'amazed', 'shocked', 'unexpected'],
-            'neutral': []
-        }
-        
+        """Detect emotions using keyword signals from Kaggle emotion detection dataset."""
         text_lower = text.lower()
         detected = []
-        
-        for emotion, keywords in emotions.items():
-            score = sum(1 for keyword in keywords if keyword in text_lower)
+
+        for emotion, keywords in self._emotion_keywords.items():
+            score = sum(1 for kw in keywords if kw in text_lower)
             if score > 0:
                 detected.append({'emotion': emotion, 'score': min(score * 0.3, 1.0)})
-        
+
         if not detected:
             detected = [{'emotion': 'neutral', 'score': 1.0}]
-        
+
         return sorted(detected, key=lambda x: x['score'], reverse=True)[:3]
     
     def analyze_sentiment(self, text):
