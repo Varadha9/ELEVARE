@@ -30,6 +30,10 @@ Thumbs.db
 data/
 *.db
 
+# Allow AI services data JSON outputs
+!ai-services/data/
+!ai-services/data/*.json
+
 # Models cache
 ai-services/models/cache/
 
