@@ -1,150 +1,196 @@
+import math
+import json
+import os
+
+_DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
+
+def _load_json(filename):
+    path = os.path.join(_DATA_DIR, filename)
+    if os.path.exists(path):
+        with open(path, encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
+
 class RecommendationEngine:
     def __init__(self, career_database):
-        self.careers = career_database
-    
+        self.careers          = career_database
+        self._ocean_profiles  = _load_json('career_ocean_profiles.json')
+        self._norms           = _load_json('personality_norms.json')
+        self._linkedin        = _load_json('linkedin_job_profiles.json')
+        self._industry_demand = self._linkedin.get('industry_demand_scores', {})
+
+    # ------------------------------------------------------------------
+    # Core math
+    # ------------------------------------------------------------------
     def cosine_similarity(self, vec1, vec2):
-        """Simple cosine similarity calculation"""
-        dot_product = sum(a * b for a, b in zip(vec1, vec2))
-        norm1 = sum(a * a for a in vec1) ** 0.5
-        norm2 = sum(b * b for b in vec2) ** 0.5
-        if norm1 == 0 or norm2 == 0:
-            return 0
-        return dot_product / (norm1 * norm2)
-        
-    def calculate_trait_match(self, user_traits, career_traits):
-        """Calculate similarity between user and career traits"""
-        user_vector = [user_traits.get(trait, 50) / 100 for trait in career_traits.keys()]
-        career_vector = [v / 100 for v in career_traits.values()]
-        
-        similarity = self.cosine_similarity(user_vector, career_vector)
-        return similarity * 100
-    
-    def calculate_personality_match(self, user_personality, career_personality):
-        """Calculate Big Five personality fit"""
-        if not career_personality:
-            return 50
-        
-        user_vector = [user_personality.get(trait, 50) / 100 for trait in career_personality.keys()]
-        career_vector = [v / 100 for v in career_personality.values()]
-        
-        similarity = self.cosine_similarity(user_vector, career_vector)
-        return similarity * 100
-    
-    def calculate_ikigai_score(self, user_ikigai, career_ikigai):
-        """Calculate Ikigai framework alignment"""
+        dot = sum(a * b for a, b in zip(vec1, vec2))
+        n1 = math.sqrt(sum(a * a for a in vec1))
+        n2 = math.sqrt(sum(b * b for b in vec2))
+        return dot / (n1 * n2) if n1 > 0 and n2 > 0 else 0.0
+
+    def jaccard_similarity(self, set_a, set_b):
+        a = set(str(x).lower() for x in set_a)
+        b = set(str(x).lower() for x in set_b)
+        return len(a & b) / len(a | b) if (a | b) else 0.0
+
+    # ------------------------------------------------------------------
+    # Paper Eq. (9): Psych(c) - cosine between user OCEAN and career fit
+    # Blends hand-coded profile 50/50 with data-driven profile from
+    # career_prediction.csv (via career_ocean_profiles.json)
+    # ------------------------------------------------------------------
+    def calculate_psychometric_match(self, user_personality, career_personality, career_title=''):
+        keys = ['openness', 'conscientiousness', 'extraversion', 'agreeableness', 'neuroticism']
+
+        u = [float(user_personality.get(k, 0.5)) for k in keys]
+        c_coded = [float(career_personality.get(k, 50)) / 100.0 for k in keys]
+
+        dp = self._ocean_profiles.get(career_title, {})
+        if dp:
+            c_data = [float(dp.get(k, {}).get('mean', c_coded[i] * 10)) / 10.0
+                      for i, k in enumerate(keys)]
+            c = [(c_coded[i] + c_data[i]) / 2.0 for i in range(len(keys))]
+        else:
+            c = c_coded
+
+        return self.cosine_similarity(u, c)
+
+    # ------------------------------------------------------------------
+    # Paper Eq. (10): A(c) - mean Jaccard across 4 Ikigai dimensions
+    # ------------------------------------------------------------------
+    def calculate_ikigai_alignment(self, user_ikigai, career_ikigai):
+        user_map = {
+            'L': user_ikigai.get('whatYouLove', []),
+            'G': user_ikigai.get('whatYouAreGoodAt', []),
+            'W': user_ikigai.get('whatTheWorldNeeds', []),
+            'P': user_ikigai.get('whatYouCanBePaidFor', []),
+        }
+        career_map = {
+            'L': career_ikigai.get('whatYouLove', career_ikigai.get('passionArea', [])),
+            'G': career_ikigai.get('whatYouAreGoodAt', career_ikigai.get('talentArea', [])),
+            'W': career_ikigai.get('whatTheWorldNeeds', career_ikigai.get('demandArea', [])),
+            'P': career_ikigai.get('whatYouCanBePaidFor', career_ikigai.get('profitArea', [])),
+        }
         scores = []
-        
-        for dimension in ['loves', 'goodAt', 'worldNeeds', 'paidFor']:
-            user_items = set(user_ikigai.get(dimension, []))
-            career_items = set(career_ikigai.get(dimension, []))
-            
-            if user_items and career_items:
-                overlap = len(user_items & career_items)
-                total = len(user_items | career_items)
-                scores.append(overlap / total if total > 0 else 0)
+        for dim in ['L', 'G', 'W', 'P']:
+            u_items = user_map[dim]
+            c_items = career_map[dim]
+            if u_items or c_items:
+                scores.append(self.jaccard_similarity(u_items, c_items))
             else:
                 scores.append(0.5)
-        
-        return (sum(scores) / len(scores)) * 100 if scores else 50
-    
+        return sum(scores) / len(scores)
+
+    # ------------------------------------------------------------------
+    # Paper Eq. (11): M(c) - market viability score
+    # Demand score enriched with LinkedIn industry data (linkedin_job_profiles.json)
+    # ------------------------------------------------------------------
+    def calculate_market_score(self, career):
+        growth_str = career.get('growthRate', '5% growth')
+        try:
+            growth_pct = float(''.join(ch for ch in growth_str if ch.isdigit() or ch == '.'))
+        except Exception:
+            growth_pct = 5.0
+        growth_norm = min(growth_pct / 40.0, 1.0)
+
+        salary_str = career.get('averageSalary', '')
+        try:
+            clean = salary_str.replace(',', '')
+            for sym in ['\u20b9', '$', 'Rs', 'INR']:
+                clean = clean.replace(sym, '')
+            parts = clean.replace('\u2013', '-').replace('\u2014', '-').split('-')
+            nums = [float(p.strip()) for p in parts if p.strip() and any(ch.isdigit() for ch in p)]
+            salary_mid = sum(nums) / len(nums) if nums else 500000
+        except Exception:
+            salary_mid = 500000
+        salary_norm = min(salary_mid / 2000000.0, 1.0)
+
+        # Demand: LinkedIn industry score if category matches, else fall back to growth
+        category = career.get('category', '')
+        linkedin_score = None
+        for industry, score in self._industry_demand.items():
+            if category.lower() in industry.lower() or industry.lower() in category.lower():
+                linkedin_score = score / 10.0
+                break
+        demand_norm = linkedin_score if linkedin_score is not None else growth_norm
+
+        return 0.40 * growth_norm + 0.35 * salary_norm + 0.25 * demand_norm
+
+    # ------------------------------------------------------------------
+    # Paper Eq. (8): Score(c) = 0.40*Psych + 0.35*A + 0.25*M
+    # ------------------------------------------------------------------
+    def calculate_composite_score(self, psych, ikigai, market):
+        return 0.40 * psych + 0.35 * ikigai + 0.25 * market
+
+    # ------------------------------------------------------------------
+    # Paper Eq. (12): Conf(c,n) = 1 - e^(-0.1 * n)
+    # ------------------------------------------------------------------
+    def calculate_confidence(self, n_sessions):
+        return 1.0 - math.exp(-0.1 * n_sessions)
+
+    # ------------------------------------------------------------------
+    # Main recommendation method
+    # ------------------------------------------------------------------
     def generate_recommendations(self, user_profile, top_n=5):
-        """Generate career recommendations using hybrid approach"""
-        recommendations = []
-        
-        user_traits = user_profile.get('behavioralTraits', {})
         user_personality = user_profile.get('personality', {})
-        user_ikigai = user_profile.get('ikigai', {})
-        
+        user_ikigai      = user_profile.get('ikigai', {})
+        n_sessions       = user_profile.get('conversationCount', 1)
+        confidence       = self.calculate_confidence(n_sessions)
+
+        results = []
         for career in self.careers:
-            # Calculate multiple scores
-            trait_score = self.calculate_trait_match(
-                user_traits, 
-                career.get('requiredTraits', {})
-            )
-            
-            personality_score = self.calculate_personality_match(
-                user_personality,
-                career.get('personalityFit', {})
-            )
-            
-            ikigai_score = self.calculate_ikigai_score(
-                user_ikigai,
-                career.get('ikigaiMapping', {})
-            )
-            
-            # Weighted combination
-            confidence = (
-                trait_score * 0.4 +
-                personality_score * 0.3 +
-                ikigai_score * 0.3
-            )
-            
-            # Generate explanation
-            explanation = self._generate_explanation(
-                career, user_traits, user_personality, confidence
-            )
-            
-            recommendations.append({
-                'careerTitle': career['title'],
-                'careerCategory': career.get('category', 'General'),
-                'confidenceScore': round(confidence, 1),
-                'explanation': explanation,
+            psych  = self.calculate_psychometric_match(
+                user_personality, career.get('personalityFit', {}), career.get('title', ''))
+            ikigai = self.calculate_ikigai_alignment(user_ikigai, career.get('ikigaiMapping', {}))
+            market = self.calculate_market_score(career)
+            score  = self.calculate_composite_score(psych, ikigai, market)
+
+            results.append({
+                'careerTitle':      career['title'],
+                'careerCategory':   career.get('category', 'General'),
+                'confidenceScore':  round(score * 100, 1),
+                'sessionConfidence': round(confidence, 3),
+                'componentScores': {
+                    'psychometric':    round(psych, 3),
+                    'ikigaiAlignment': round(ikigai, 3),
+                    'marketViability': round(market, 3),
+                },
+                'explanation': self._generate_explanation(career, user_profile, score),
                 'careerDetails': {
-                    'description': career.get('description', ''),
+                    'description':    career.get('description', ''),
                     'requiredSkills': career.get('skills', []),
-                    'averageSalary': career.get('averageSalary', 'Varies'),
-                    'growthOutlook': career.get('growthRate', 'Stable'),
-                    'educationPath': career.get('education', [])
+                    'averageSalary':  career.get('averageSalary', 'Varies'),
+                    'growthOutlook':  career.get('growthRate', 'Stable'),
+                    'educationPath':  career.get('education', []),
                 }
             })
-        
-        # Sort by confidence and return top N
-        recommendations.sort(key=lambda x: x['confidenceScore'], reverse=True)
-        return recommendations[:top_n]
-    
-    def _generate_explanation(self, career, user_traits, user_personality, confidence):
-        """Generate human-readable explanation"""
-        # Find matching traits
-        career_traits = career.get('requiredTraits', {})
-        matching_traits = []
-        
-        for trait, required_value in career_traits.items():
-            user_value = user_traits.get(trait, 50)
-            if abs(user_value - required_value) < 20:
-                matching_traits.append(trait.replace('_', ' '))
-        
-        summary = f"This career aligns well with your profile. "
-        
-        if matching_traits:
-            traits_str = ', '.join(matching_traits[:3])
-            summary += f"Your strengths in {traits_str} are particularly relevant. "
-        
-        if confidence > 80:
-            summary += "This is a strong match based on your behavioral patterns and personality."
-        elif confidence > 60:
-            summary += "This career shows good compatibility with your interests and skills."
+
+        results.sort(key=lambda x: x['confidenceScore'], reverse=True)
+        return results[:top_n]
+
+    def _generate_explanation(self, career, user_profile, score):
+        traits = user_profile.get('behavioralTraits', {})
+        top_traits = sorted(traits.items(), key=lambda x: x[1], reverse=True)[:3]
+        matching = [t[0].replace('_', ' ') for t in top_traits]
+
+        if score > 0.75:
+            summary = "Strong match - your profile closely aligns with {} requirements.".format(career['title'])
+        elif score > 0.55:
+            summary = "Good match - {} fits several of your key strengths.".format(career['title'])
         else:
-            summary += "This career could be worth exploring as you develop related skills."
-        
+            summary = "Potential match - {} could be worth exploring.".format(career['title'])
+
         return {
             'summary': summary,
-            'matchingTraits': matching_traits[:5],
-            'ikigaiAlignment': {
-                'loves': round(confidence * 0.25, 1),
-                'goodAt': round(confidence * 0.25, 1),
-                'worldNeeds': round(confidence * 0.25, 1),
-                'paidFor': round(confidence * 0.25, 1)
-            }
+            'matchingTraits': matching,
         }
-    
+
     def update_from_feedback(self, user_id, career_title, interested, rating):
-        """Update recommendation model based on user feedback"""
         from datetime import datetime
-        feedback_data = {
-            'user_id': user_id,
-            'career': career_title,
+        return {
+            'user_id':   user_id,
+            'career':    career_title,
             'interested': interested,
-            'rating': rating,
+            'rating':    rating,
             'timestamp': datetime.now().isoformat()
         }
-        return feedback_data

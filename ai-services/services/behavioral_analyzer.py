@@ -1,52 +1,53 @@
-from datetime import datetime
-
 class BehavioralAnalyzer:
     def __init__(self):
-        self.learning_rate = 0.15  # How quickly traits update
-        
+        self.lambda_decay = 0.85   # Paper Section III-B: λ = 0.85
+        self.learning_rate = 1 - self.lambda_decay  # = 0.15
+
+    # ------------------------------------------------------------------
+    # Paper Eq. (7): P_i(t) = λ·P_i(t-1) + (1-λ)·P̂_i(t)
+    # ------------------------------------------------------------------
     def update_traits(self, current_traits, detected_traits):
-        """Update behavioral traits based on new evidence"""
+        """EWMA update for behavioral traits (0-10 scale)."""
         updated = {}
-        
-        for trait, current_value in current_traits.items():
+        for trait, current in current_traits.items():
             if trait in detected_traits:
-                # Gradual update using exponential moving average
-                new_signal = detected_traits[trait]
-                updated[trait] = current_value + (new_signal * self.learning_rate)
-                updated[trait] = max(0, min(100, updated[trait]))  # Clamp 0-100
+                new_signal = float(detected_traits[trait])
+                # Correct EWMA: weight old value by λ, new signal by (1-λ)
+                updated[trait] = self.lambda_decay * current + self.learning_rate * new_signal
+                updated[trait] = max(0.0, min(10.0, updated[trait]))
             else:
-                updated[trait] = current_value
-        
+                updated[trait] = current
         return updated
-    
+
     def update_personality(self, current_personality, personality_signals):
-        """Update Big Five personality traits"""
+        """EWMA update for Big Five personality traits (0-1 scale)."""
         updated = {}
-        
-        for trait, current_value in current_personality.items():
+        for trait, current in current_personality.items():
             if trait in personality_signals:
-                signal = personality_signals[trait]
-                updated[trait] = current_value + (signal * self.learning_rate)
-                updated[trait] = max(0, min(100, updated[trait]))
+                # personality_signals come in 0-10 from NLP → normalise to 0-1
+                new_signal = float(personality_signals[trait]) / 10.0
+                updated[trait] = self.lambda_decay * current + self.learning_rate * new_signal
+                updated[trait] = max(0.0, min(1.0, updated[trait]))
             else:
-                updated[trait] = current_value
-        
+                updated[trait] = current
         return updated
-    
+
+    # ------------------------------------------------------------------
+    # Ikigai dimension mapping — keys match frontend + DB schema
+    # ------------------------------------------------------------------
     def calculate_ikigai_alignment(self, user_profile, interests):
-        """Map behavioral traits to Ikigai dimensions"""
-        traits = user_profile.get('behavioralTraits', {})
+        """Map behavioral traits to Ikigai dimensions using correct key names."""
+        traits      = user_profile.get('behavioralTraits', {})
         personality = user_profile.get('personality', {})
 
-        # Traits are stored 0-10, personality 0-1
-        def t(key): return traits.get(key, 5.0)
-        def p(key): return personality.get(key, 0.5)
+        def t(key): return float(traits.get(key, 5.0))       # 0-10
+        def p(key): return float(personality.get(key, 0.5))  # 0-1
 
         ikigai = {
-            'whatYouLove': [],
-            'whatYouAreGoodAt': [],
-            'whatTheWorldNeeds': [],
-            'whatYouCanBePaidFor': []
+            'whatYouLove':          [],
+            'whatYouAreGoodAt':     [],
+            'whatTheWorldNeeds':    [],
+            'whatYouCanBePaidFor':  [],
         }
 
         # What you love
@@ -94,8 +95,7 @@ class BehavioralAnalyzer:
             ikigai['whatYouCanBePaidFor'].append('design and creative services')
 
         return ikigai
-    
+
     def get_dominant_traits(self, traits, top_n=5):
-        """Get top N dominant traits"""
         sorted_traits = sorted(traits.items(), key=lambda x: x[1], reverse=True)
         return sorted_traits[:top_n]

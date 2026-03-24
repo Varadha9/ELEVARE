@@ -1,0 +1,37 @@
+{
+  "extraversion": {
+    "mean_raw": 2.9294,
+    "std_raw": 0.9079,
+    "mean_10": 4.82,
+    "std_10": 2.2697,
+    "n": 200000
+  },
+  "neuroticism": {
+    "mean_raw": 3.0437,
+    "std_raw": 0.8446,
+    "mean_10": 5.11,
+    "std_10": 2.1115,
+    "n": 200000
+  },
+  "agreeableness": {
+    "mean_raw": 3.7439,
+    "std_raw": 0.7225,
+    "mean_10": 6.86,
+    "std_10": 1.8063,
+    "n": 200000
+  },
+  "conscientiousness": {
+    "mean_raw": 3.3271,
+    "std_raw": 0.7311,
+    "mean_10": 5.82,
+    "std_10": 1.8277,
+    "n": 200000
+  },
+  "openness": {
+    "mean_raw": 3.8611,
+    "std_raw": 0.6135,
+    "mean_10": 7.15,
+    "std_10": 1.5336,
+    "n": 200000
+  }
+}
