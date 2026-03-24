@@ -1,0 +1,2914 @@
+{
+  "Accountant": {
+    "openness": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 3.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.92
+  },
+  "Graphic Designer": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 5.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.76
+  },
+  "Salesperson": {
+    "openness": {
+      "mean": 6.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 9.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.41
+  },
+  "Research Scientist": {
+    "openness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 7.34
+  },
+  "Teacher": {
+    "openness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.01
+  },
+  "Architect": {
+    "openness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 7.27
+  },
+  "Nurse": {
+    "openness": {
+      "mean": 4.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 6.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.0
+  },
+  "Software Developer": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.74
+  },
+  "Psychologist": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.74
+  },
+  "Chef": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.76
+  },
+  "Marketing Manager": {
+    "openness": {
+      "mean": 6.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.61
+  },
+  "Physician": {
+    "openness": {
+      "mean": 7.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 9.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.54
+  },
+  "Artist": {
+    "openness": {
+      "mean": 9.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 3.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.72
+  },
+  "Human Resources Manager": {
+    "openness": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.67
+  },
+  "Construction Engineer": {
+    "openness": {
+      "mean": 4.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 3.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 2.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.34
+  },
+  "Journalist": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.16
+  },
+  "Astronomer": {
+    "openness": {
+      "mean": 9.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 7.47
+  },
+  "Financial Analyst": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.65
+  },
+  "Biologist": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 3.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.41
+  },
+  "Event Planner": {
+    "openness": {
+      "mean": 6.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 8.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.2
+  },
+  "Real Estate Agent": {
+    "openness": {
+      "mean": 6.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.76
+  },
+  "Environmental Scientist": {
+    "openness": {
+      "mean": 8.89,
+      "std": 0.32,
+      "n": 2
+    },
+    "conscientiousness": {
+      "mean": 7.79,
+      "std": 0.47,
+      "n": 2
+    },
+    "extraversion": {
+      "mean": 4.12,
+      "std": 0.16,
+      "n": 2
+    },
+    "agreeableness": {
+      "mean": 5.45,
+      "std": 0.31,
+      "n": 2
+    },
+    "neuroticism": {
+      "mean": 4.22,
+      "std": 0.63,
+      "n": 2
+    },
+    "aptitude_mean": 6.81
+  },
+  "Lawyer": {
+    "openness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.34
+  },
+  "IT Support Specialist": {
+    "openness": {
+      "mean": 6.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 2.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.1
+  },
+  "Fashion Designer": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 3.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.92
+  },
+  "Marketing Coordinator": {
+    "openness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 8.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.69
+  },
+  "Biomedical Engineer": {
+    "openness": {
+      "mean": 7.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.76
+  },
+  "Event Photographer": {
+    "openness": {
+      "mean": 7.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 3.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.03
+  },
+  "Data Analyst": {
+    "openness": {
+      "mean": 6.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.58
+  },
+  "Pharmacist": {
+    "openness": {
+      "mean": 7.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 9.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.21
+  },
+  "Social Worker": {
+    "openness": {
+      "mean": 7.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.12
+  },
+  "Financial Planner": {
+    "openness": {
+      "mean": 5.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 6.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.7
+  },
+  "Biotechnologist": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.23
+  },
+  "HR Recruiter": {
+    "openness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 6.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 8.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.54
+  },
+  "Software Quality Assurance Tester": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.32
+  },
+  "Elementary School Teacher": {
+    "openness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.27
+  },
+  "Industrial Engineer": {
+    "openness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 7.34
+  },
+  "Market Research Analyst": {
+    "openness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.94
+  },
+  "Financial Auditor": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.32
+  },
+  "Musician": {
+    "openness": {
+      "mean": 9.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 4.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 7.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.83
+  },
+  "Police Detective": {
+    "openness": {
+      "mean": 5.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.25
+  },
+  "Marketing Copywriter": {
+    "openness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.27
+  },
+  "Zoologist": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.38
+  },
+  "Speech Therapist": {
+    "openness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.87
+  },
+  "Mechanical Engineer": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 3.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 7.34
+  },
+  "Forensic Scientist": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.81
+  },
+  "Social Media Manager": {
+    "openness": {
+      "mean": 6.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.27
+  },
+  "Geologist": {
+    "openness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.89
+  },
+  "Web Developer": {
+    "openness": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.45
+  },
+  "Wildlife Biologist": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.38
+  },
+  "Air Traffic Controller": {
+    "openness": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 7.16
+  },
+  "Game Developer": {
+    "openness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.61
+  },
+  "Urban Planner": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 3.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.45
+  },
+  "Financial Advisor": {
+    "openness": {
+      "mean": 6.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 3.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.49
+  },
+  "Airline Pilot": {
+    "openness": {
+      "mean": 4.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 7.05
+  },
+  "Environmental Engineer": {
+    "openness": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.61
+  },
+  "Interior Designer": {
+    "openness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.09
+  },
+  "Physical Therapist": {
+    "openness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.87
+  },
+  "Mechanical Designer": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 3.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 4.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 7.47
+  },
+  "Dental Hygienist": {
+    "openness": {
+      "mean": 7.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.58
+  },
+  "Marketing Analyst": {
+    "openness": {
+      "mean": 6.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 3.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.32
+  },
+  "Aerospace Engineer": {
+    "openness": {
+      "mean": 7.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 7.63
+  },
+  "Pediatric Nurse": {
+    "openness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.87
+  },
+  "Advertising Executive": {
+    "openness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 6.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.27
+  },
+  "Wildlife Conservationist": {
+    "openness": {
+      "mean": 8.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.41
+  },
+  "IT Project Manager": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.78
+  },
+  "Forestry Technician": {
+    "openness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.14
+  },
+  "Video Game Tester": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.14
+  },
+  "Marriage Counselor": {
+    "openness": {
+      "mean": 7.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.87
+  },
+  "Biomedical Researcher": {
+    "openness": {
+      "mean": 9.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.38
+  },
+  "Database Administrator": {
+    "openness": {
+      "mean": 6.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 3.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.32
+  },
+  "Public Relations Specialist": {
+    "openness": {
+      "mean": 6.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.27
+  },
+  "Genetic Counselor": {
+    "openness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.87
+  },
+  "Market Researcher": {
+    "openness": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.67
+  },
+  "Occupational Therapist": {
+    "openness": {
+      "mean": 7.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.87
+  },
+  "Electrical Engineer": {
+    "openness": {
+      "mean": 7.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 7.65
+  },
+  "Investment Banker": {
+    "openness": {
+      "mean": 7.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.41
+  },
+  "Marine Biologist": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.41
+  },
+  "Human Rights Lawyer": {
+    "openness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.5
+  },
+  "Database Analyst": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 3.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.43
+  },
+  "Pediatrician": {
+    "openness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.74
+  },
+  "Technical Writer": {
+    "openness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.87
+  },
+  "Forensic Psychologist": {
+    "openness": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.3
+  },
+  "Product Manager": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.56
+  },
+  "Fashion Stylist": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.14
+  },
+  "Speech Pathologist": {
+    "openness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.87
+  },
+  "Public Health Analyst": {
+    "openness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.32
+  },
+  "Sports Coach": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 8.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 3.74
+  },
+  "Insurance Underwriter": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 3.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.43
+  },
+  "Chiropractor": {
+    "openness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.85
+  },
+  "Radiologic Technologist": {
+    "openness": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 8.56,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 8.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.21
+  },
+  "Tax Accountant": {
+    "openness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 9.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.14
+  },
+  "Quality Control Inspector": {
+    "openness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 3.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 4.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.87
+  },
+  "Rehabilitation Counselor": {
+    "openness": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.87
+  },
+  "Film Director": {
+    "openness": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.12
+  },
+  "Diplomat": {
+    "openness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.69
+  },
+  "Police Officer": {
+    "openness": {
+      "mean": 2.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.12
+  },
+  "Administrative Officer": {
+    "openness": {
+      "mean": 7.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.83
+  },
+  "Tax Collector": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 3.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 5.43
+  },
+  "Foreign Service Officer": {
+    "openness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 6.01,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 9.12,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.69
+  },
+  "Customs and Border Protection Officer": {
+    "openness": {
+      "mean": 2.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 8.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 6.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 4.12
+  },
+  "Civil Engineer": {
+    "openness": {
+      "mean": 6.78,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 8.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 6.96
+  },
+  "Robotics Engineer": {
+    "openness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 7.67
+  },
+  "Electronics Design Engineer": {
+    "openness": {
+      "mean": 7.34,
+      "std": 0.0,
+      "n": 1
+    },
+    "conscientiousness": {
+      "mean": 7.67,
+      "std": 0.0,
+      "n": 1
+    },
+    "extraversion": {
+      "mean": 4.23,
+      "std": 0.0,
+      "n": 1
+    },
+    "agreeableness": {
+      "mean": 5.45,
+      "std": 0.0,
+      "n": 1
+    },
+    "neuroticism": {
+      "mean": 4.89,
+      "std": 0.0,
+      "n": 1
+    },
+    "aptitude_mean": 7.63
+  }
+}

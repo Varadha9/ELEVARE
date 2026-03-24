@@ -1,0 +1,126 @@
+{
+  "labels": [
+    "sadness",
+    "anger",
+    "love",
+    "surprise",
+    "fear",
+    "joy"
+  ],
+  "label_to_index": {
+    "sadness": 0,
+    "anger": 1,
+    "love": 2,
+    "surprise": 3,
+    "fear": 4,
+    "joy": 5
+  },
+  "keyword_signals": {
+    "sadness": [
+      "sad",
+      "hopeless",
+      "humiliated",
+      "pathetic",
+      "blue",
+      "depressed",
+      "miserable",
+      "unhappy",
+      "grief",
+      "sorrow",
+      "lonely",
+      "heartbroken"
+    ],
+    "anger": [
+      "angry",
+      "greedy",
+      "grouchy",
+      "rude",
+      "furious",
+      "irritated",
+      "annoyed",
+      "frustrated",
+      "outraged",
+      "mad",
+      "hostile"
+    ],
+    "love": [
+      "love",
+      "nostalgic",
+      "affectionate",
+      "caring",
+      "adore",
+      "cherish",
+      "fond",
+      "devoted",
+      "passionate",
+      "tender"
+    ],
+    "surprise": [
+      "surprised",
+      "amazed",
+      "astonished",
+      "shocked",
+      "unexpected",
+      "startled",
+      "stunned",
+      "bewildered",
+      "astounded"
+    ],
+    "fear": [
+      "fear",
+      "terrified",
+      "scared",
+      "anxious",
+      "worried",
+      "nervous",
+      "dread",
+      "panic",
+      "frightened",
+      "apprehensive",
+      "trauma"
+    ],
+    "joy": [
+      "joy",
+      "happy",
+      "strong",
+      "good",
+      "festive",
+      "excited",
+      "delighted",
+      "cheerful",
+      "elated",
+      "pleased",
+      "content"
+    ]
+  },
+  "trait_signals": {
+    "sadness": {
+      "empathy": 0.3,
+      "stressTolerance": -0.2
+    },
+    "anger": {
+      "stressTolerance": -0.3,
+      "leadership": 0.1
+    },
+    "love": {
+      "empathy": 0.4,
+      "communication": 0.2
+    },
+    "surprise": {
+      "creativity": 0.2,
+      "analyticalThinking": 0.1
+    },
+    "fear": {
+      "stressTolerance": -0.2,
+      "motivation": -0.1
+    },
+    "joy": {
+      "motivation": 0.3,
+      "communication": 0.2,
+      "creativity": 0.1
+    }
+  },
+  "source": "emotion-detection-from-text (Kaggle) \u2014 16,000 train / 2,000 val rows",
+  "model_arch": "Bidirectional LSTM x3 + GloVe 200d embeddings",
+  "classes": 6
+}
