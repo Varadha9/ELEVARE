@@ -57,3 +57,6 @@ research_paper/
 *.tex
 *.pdf
 *.bib
+
+# Large datasets (download from Kaggle)
+datasets/big_five_ipip.csv
