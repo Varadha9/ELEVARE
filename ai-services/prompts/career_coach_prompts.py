@@ -49,8 +49,11 @@ AVOID:
 
     if user_profile:
         traits = user_profile.get('behavioralTraits', {})
+        conversation_count = user_profile.get('conversationCount', 0)
         if traits:
             top_traits = sorted(traits.items(), key=lambda x: x[1], reverse=True)[:3]
             base_prompt += f"\n\nUSER CONTEXT:\nObserved Strengths: {', '.join([t[0] for t in top_traits])}"
-    
+        if conversation_count >= 3:
+            base_prompt += f"\n\nIMPORTANT: You now have enough data ({conversation_count} conversations) to suggest career directions. Naturally weave in 1-2 specific career paths that match the user's observed strengths and interests. Mention they can see full career matches on the Careers page."
+
     return base_prompt
