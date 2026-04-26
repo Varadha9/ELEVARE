@@ -7,6 +7,48 @@ const sampleData = [
   { date: 'Week 4', creativity: 6.5, analytical: 7, communication: 5.5 },
 ];
 
+export function buildChartData(conversations, timeRange = 'weekly') {
+  if (!conversations || conversations.length === 0) return [];
+
+  // Group conversations into buckets
+  const sorted = [...conversations].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  const bucketSize = timeRange === 'monthly' ? 30 : 7; // days per bucket
+
+  const first = new Date(sorted[0].timestamp);
+  const buckets = {};
+
+  sorted.forEach(conv => {
+    const daysDiff = Math.floor((new Date(conv.timestamp) - first) / (1000 * 60 * 60 * 24));
+    const bucketIndex = Math.floor(daysDiff / bucketSize);
+    const label = timeRange === 'monthly'
+      ? `Month ${bucketIndex + 1}`
+      : `Week ${bucketIndex + 1}`;
+
+    if (!buckets[label]) buckets[label] = { date: label, _counts: {}, creativity: 0, analytical: 0, communication: 0 };
+
+    // Pull trait scores from analysis if available
+    const traits = conv.detectedTraits || conv.analysis?.detectedTraits || [];
+    const traitMap = Array.isArray(traits)
+      ? Object.fromEntries(traits.map(t => [t.trait, t.value]))
+      : traits;
+
+    ['creativity', 'analyticalThinking', 'communication'].forEach(key => {
+      const shortKey = key === 'analyticalThinking' ? 'analytical' : key;
+      if (traitMap[key] !== undefined) {
+        buckets[label][shortKey] += traitMap[key];
+        buckets[label]._counts[shortKey] = (buckets[label]._counts[shortKey] || 0) + 1;
+      }
+    });
+  });
+
+  return Object.values(buckets).map(b => ({
+    date: b.date,
+    creativity:    b._counts.creativity    ? +(b.creativity    / b._counts.creativity).toFixed(1)    : null,
+    analytical:    b._counts.analytical    ? +(b.analytical    / b._counts.analytical).toFixed(1)    : null,
+    communication: b._counts.communication ? +(b.communication / b._counts.communication).toFixed(1) : null,
+  }));
+}
+
 export function ProgressLineChart({ data }) {
   const isDark = document.documentElement.classList.contains('dark');
   const tickColor  = isDark ? '#94A3B8' : '#6B7280';

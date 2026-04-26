@@ -3,7 +3,7 @@ import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Loading } from '../components/ui/Loading';
-import { ProgressLineChart } from '../components/charts/ProgressLineChart';
+import { ProgressLineChart, buildChartData } from '../components/charts/ProgressLineChart';
 import { TrendingUp, Calendar, MessageSquare, Target, CheckCircle, Circle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -106,39 +106,48 @@ export function Progress() {
               </div>
             </div>
           </CardHeader>
-          <CardContent><ProgressLineChart /></CardContent>
+          <CardContent><ProgressLineChart data={buildChartData(conversations, timeRange)} /></CardContent>
         </Card>
 
         {/* Activity calendar */}
         <Card>
-          <CardHeader>
-            <CardTitle>Reflection Activity</CardTitle>
-            <CardDescription>Your daily reflection consistency — last 28 days</CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Reflection Activity</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Last 28 days</p>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-gray-200 dark:bg-slate-700 inline-block" />None</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-primary inline-block" />Active</span>
+              </div>
+            </div>
             {conversations.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500 dark:text-gray-400 mb-4">No activity yet. Start your first reflection!</p>
-                <Button onClick={() => navigate('/reflection')}>Start Reflecting</Button>
+              <div className="text-center py-4">
+                <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">No activity yet.</p>
+                <Button size="sm" onClick={() => navigate('/reflection')}>Start Reflecting</Button>
               </div>
             ) : (
-              <>
-                <div className="grid grid-cols-7 gap-2">
+              <div className="flex flex-col gap-1 w-fit">
+                <div className="grid grid-cols-7 gap-1.5 mb-0.5">
+                  {['S','M','T','W','T','F','S'].map((d, i) => (
+                    <div key={i} className="w-7 text-center text-[10px] text-gray-400 dark:text-gray-500">{d}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-1.5">
                   {last28.map((day, i) => (
                     <div
                       key={i}
                       title={day.date.toLocaleDateString()}
-                      className={`aspect-square rounded-lg transition-colors ${
-                        day.active ? 'bg-primary' : 'bg-gray-100 dark:bg-slate-700'
+                      className={`w-7 h-7 rounded-md transition-colors ${
+                        day.active
+                          ? 'bg-primary opacity-90 hover:opacity-100'
+                          : 'bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600'
                       }`}
                     />
                   ))}
                 </div>
-                <div className="flex items-center gap-4 mt-4 text-xs text-gray-500 dark:text-gray-400">
-                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-gray-100 dark:bg-slate-700 rounded" /><span>No activity</span></div>
-                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-primary rounded" /><span>Reflected</span></div>
-                </div>
-              </>
+              </div>
             )}
           </CardContent>
         </Card>

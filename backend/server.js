@@ -179,7 +179,7 @@ app.use(express.urlencoded({ extended: true }));
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 500,
   message: { success: false, error: { message: 'Too many requests from this IP, please try again later.' } }
 });
 app.use('/api/', limiter);
@@ -686,11 +686,11 @@ app.get('/api/conversations/history', verifyToken, async (req, res) => {
     let conversations;
 
     if (USE_MEMORY_DB) {
-      conversations = await memoryDB.getUserConversations(req.user.userId, 20);
+      conversations = await memoryDB.getUserConversations(req.user.userId, 50);
     } else {
       conversations = await Conversation.find({ userId: req.user.userId })
-        .sort({ timestamp: -1 })
-        .limit(20);
+        .sort({ timestamp: 1 })
+        .limit(50);
     }
 
     res.json({
@@ -725,39 +725,63 @@ app.get('/api/recommendations', verifyToken, async (req, res) => {
       profile = await UserProfile.findOne({ userId: req.user.userId });
     }
 
-    if (!profile || profile.conversationCount < 3) {
+    if (!profile || profile.conversationCount < 1) {
       return res.json({ success: true, data: [] });
     }
 
-    const generateRecommendations = (traits) => {
-      const careers = [
-        { title: 'Software Engineer', match: (traits.analyticalThinking * 0.3 + traits.problemSolving * 0.3 + traits.creativity * 0.2 + traits.adaptability * 0.2) / 10, description: 'Design and develop software applications', skills: ['Programming', 'Problem Solving', 'Logical Thinking'], salary: '$95,000', growth: '22%' },
-        { title: 'Product Manager', match: (traits.leadership * 0.3 + traits.communication * 0.3 + traits.analyticalThinking * 0.2 + traits.teamwork * 0.2) / 10, description: 'Guide product development from conception to launch', skills: ['Leadership', 'Communication', 'Strategic Thinking'], salary: '$115,000', growth: '19%' },
-        { title: 'UX Designer', match: (traits.creativity * 0.4 + traits.empathy * 0.3 + traits.problemSolving * 0.2 + traits.communication * 0.1) / 10, description: 'Create intuitive and engaging user experiences', skills: ['Design', 'User Research', 'Creativity'], salary: '$85,000', growth: '13%' },
-        { title: 'Data Scientist', match: (traits.analyticalThinking * 0.4 + traits.problemSolving * 0.3 + traits.creativity * 0.2 + traits.adaptability * 0.1) / 10, description: 'Analyze complex data to drive business decisions', skills: ['Statistics', 'Programming', 'Critical Thinking'], salary: '$120,000', growth: '31%' },
-        { title: 'Marketing Manager', match: (traits.creativity * 0.3 + traits.communication * 0.3 + traits.leadership * 0.2 + traits.adaptability * 0.2) / 10, description: 'Develop and execute marketing strategies', skills: ['Marketing', 'Communication', 'Creativity'], salary: '$75,000', growth: '10%' }
-      ];
-      return careers
-        .map(c => ({ ...c, matchScore: Math.min(0.95, Math.max(0.4, c.match + (Math.random() * 0.1 - 0.05))), confidence: Math.min(0.9, Math.max(0.6, c.match * 0.8 + (Math.random() * 0.1))) }))
-        .sort((a, b) => b.matchScore - a.matchScore)
-        .slice(0, 5);
-    };
+    // Try AI service first
+    try {
+      const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+      const aiRes = await fetch(`${AI_SERVICE_URL}/recommend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: req.user.userId })
+      });
+      if (aiRes.ok) {
+        const aiData = await aiRes.json();
+        const recs = aiData.recommendations || [];
+        return res.json({
+          success: true,
+          data: recs.map(r => ({
+            careerTitle:     r.careerTitle,
+            category:        r.careerCategory,
+            confidenceScore: r.confidenceScore,
+            reasoning:       r.explanation?.summary || '',
+            matchedTraits:   r.explanation?.matchingTraits || [],
+            requiredSkills:  r.careerDetails?.requiredSkills || [],
+            averageSalary:   r.careerDetails?.averageSalary || '',
+            growthRate:      r.careerDetails?.growthOutlook || '',
+          }))
+        });
+      }
+    } catch (aiErr) {
+      console.warn('AI service unavailable for recommendations, using fallback');
+    }
 
-    const recs = generateRecommendations(profile.behavioralTraits);
+    // Fallback: simple trait-based scoring
+    const traits = profile.behavioralTraits;
+    const careers = [
+      { title: 'Software Engineer',  match: (traits.analyticalThinking * 0.3 + traits.problemSolving * 0.3 + traits.creativity * 0.2 + traits.adaptability * 0.2) / 10, description: 'Design and develop software applications', skills: ['Programming', 'Problem Solving', 'Logical Thinking'], salary: '$95,000',  growth: '22%' },
+      { title: 'Product Manager',    match: (traits.leadership * 0.3 + traits.communication * 0.3 + traits.analyticalThinking * 0.2 + traits.teamwork * 0.2) / 10,        description: 'Guide product development from conception to launch', skills: ['Leadership', 'Communication', 'Strategic Thinking'], salary: '$115,000', growth: '19%' },
+      { title: 'UX Designer',        match: (traits.creativity * 0.4 + traits.empathy * 0.3 + traits.problemSolving * 0.2 + traits.communication * 0.1) / 10,             description: 'Create intuitive and engaging user experiences', skills: ['Design', 'User Research', 'Creativity'], salary: '$85,000',  growth: '13%' },
+      { title: 'Data Scientist',     match: (traits.analyticalThinking * 0.4 + traits.problemSolving * 0.3 + traits.creativity * 0.2 + traits.adaptability * 0.1) / 10,   description: 'Analyze complex data to drive business decisions', skills: ['Statistics', 'Programming', 'Critical Thinking'], salary: '$120,000', growth: '31%' },
+      { title: 'Marketing Manager',  match: (traits.creativity * 0.3 + traits.communication * 0.3 + traits.leadership * 0.2 + traits.adaptability * 0.2) / 10,           description: 'Develop and execute marketing strategies', skills: ['Marketing', 'Communication', 'Creativity'], salary: '$75,000',  growth: '10%' }
+    ];
+    const recs = careers
+      .map(c => ({ ...c, matchScore: Math.min(0.95, Math.max(0.4, c.match + (Math.random() * 0.1 - 0.05))) }))
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, 5);
+    const topTraits = Object.entries(traits).sort(([,a],[,b]) => b-a).slice(0,3).map(([k]) => k.replace(/([A-Z])/g, ' $1').trim());
     res.json({
       success: true,
       data: recs.map(rec => ({
-        career: rec.title,
-        careerTitle: rec.title,
-        matchScore: parseFloat(rec.matchScore.toFixed(2)),
+        careerTitle:     rec.title,
         confidenceScore: parseFloat((rec.matchScore * 100).toFixed(0)),
-        confidence: parseFloat(rec.confidence.toFixed(2)),
-        description: rec.description,
-        reasoning: rec.description,
-        requiredSkills: rec.skills,
-        matchedTraits: Object.entries(profile.behavioralTraits).sort(([,a],[,b]) => b-a).slice(0,3).map(([k]) => k.replace(/([A-Z])/g, ' $1').trim()),
-        averageSalary: rec.salary,
-        growthRate: rec.growth
+        reasoning:       rec.description,
+        matchedTraits:   topTraits,
+        requiredSkills:  rec.skills,
+        averageSalary:   rec.salary,
+        growthRate:      rec.growth
       }))
     });
   } catch (error) {
@@ -776,10 +800,10 @@ app.post('/api/recommendations/generate', verifyToken, async (req, res) => {
       profile = await UserProfile.findOne({ userId: req.user.userId });
     }
     
-    if (!profile || profile.conversationCount < 3) {
+    if (!profile || profile.conversationCount < 1) {
       return res.status(400).json({
         success: false,
-        error: { message: 'Please have at least 3 conversations before generating recommendations' }
+        error: { message: 'Please have at least 1 conversation before generating recommendations' }
       });
     }
 
