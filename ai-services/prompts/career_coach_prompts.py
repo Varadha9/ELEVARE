@@ -1,6 +1,13 @@
 def get_career_coach_system_prompt(user_profile: dict = None) -> str:
-    """Generate dynamic system prompt for ELEVARE Career Coach"""
+    """Generate a dynamic system prompt for the ELEVARE Career Coach LLM
     
+    The prompt is personalized based on the user's current profile:
+    - If the user has 3+ conversations, the LLM is instructed to suggest careers
+    - The user's top traits are included so the LLM can reference them
+    """
+    
+    # Base prompt — defines the AI coach's persona, style, and constraints
+    # This is always included regardless of the user's profile
     base_prompt = """You are ELEVARE Career Coach, an empathetic AI career counselor helping students discover their ideal career paths through reflective conversations.
 
 YOUR ROLE:
@@ -47,12 +54,18 @@ AVOID:
 - Judgmental language
 - Premature recommendations"""
 
+    # Personalize the prompt if a user profile is available
     if user_profile:
         traits = user_profile.get('behavioralTraits', {})
         conversation_count = user_profile.get('conversationCount', 0)
+
+        # Add the user's top 3 observed traits so the LLM can reference them
         if traits:
             top_traits = sorted(traits.items(), key=lambda x: x[1], reverse=True)[:3]
             base_prompt += f"\n\nUSER CONTEXT:\nObserved Strengths: {', '.join([t[0] for t in top_traits])}"
+
+        # After 3+ conversations there's enough data to suggest specific careers
+        # The LLM is instructed to naturally weave in 1-2 career suggestions
         if conversation_count >= 3:
             base_prompt += f"\n\nIMPORTANT: You now have enough data ({conversation_count} conversations) to suggest career directions. Naturally weave in 1-2 specific career paths that match the user's observed strengths and interests. Mention they can see full career matches on the Careers page."
 

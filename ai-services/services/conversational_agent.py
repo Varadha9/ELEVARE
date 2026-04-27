@@ -1,13 +1,17 @@
 import sys
 import os
+# Add parent directory to path so we can import from utils/
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Groq LLM client — wraps the Groq API (Llama 3.3 70B)
 from utils.llm_client import GroqLLMClient
+# Dynamic system prompt builder — personalizes the AI coach based on user profile
 from prompts.career_coach_prompts import get_career_coach_system_prompt
 from typing import List, Dict
 
 class ConversationalAgent:
     def __init__(self):
+        # Initialize the Groq LLM client — reads API key from .env
         self.llm_client = GroqLLMClient()
     
     def generate_response(
@@ -19,35 +23,48 @@ class ConversationalAgent:
     ) -> str:
         """Generate intelligent response using LLM + NLP insights"""
         
+        # Build a personalized system prompt based on the user's current profile
+        # If the user has 3+ conversations, the prompt includes career suggestions
         system_prompt = get_career_coach_system_prompt(user_profile)
+        
+        # Enrich the user message with NLP context (sentiment, emotions, keywords)
+        # This helps the LLM give more relevant and empathetic responses
         enhanced_context = self._build_context(user_message, nlp_analysis)
         
+        # Call the Groq API with the system prompt, enriched message, and chat history
         response = self.llm_client.generate_response(
             system_prompt=system_prompt,
             user_message=enhanced_context,
             conversation_history=conversation_history,
-            temperature=0.7
+            temperature=0.7  # Moderate creativity — not too random, not too rigid
         )
         
         return response
     
     def _build_context(self, message: str, nlp_analysis: dict) -> str:
-        """Build enriched context for LLM"""
+        """Build enriched context string for the LLM
         
+        Appends NLP metadata as structured tags so the LLM can use them
+        without the user seeing them directly
+        """
         context = f"User message: {message}\n\n"
         
+        # Add sentiment so the LLM can match the user's emotional tone
         sentiment = nlp_analysis.get('sentiment', 'neutral')
-        emotions = nlp_analysis.get('emotions', [])
-        keywords = nlp_analysis.get('keywords', [])
+        emotions  = nlp_analysis.get('emotions', [])
+        keywords  = nlp_analysis.get('keywords', [])
         
         context += f"[Sentiment: {sentiment}]\n"
         
+        # Add the dominant emotion to help the LLM respond empathetically
         if emotions:
             context += f"[Emotion: {emotions[0]['emotion']}]\n"
         
+        # Add key topics so the LLM can reference them in its response
         if keywords:
             context += f"[Topics: {', '.join(keywords[:5])}]\n"
         
+        # Add detected traits so the LLM can acknowledge the user's strengths
         detected_traits = nlp_analysis.get('detectedTraits', {})
         if detected_traits:
             context += f"[Traits: {', '.join(detected_traits.keys())}]\n"

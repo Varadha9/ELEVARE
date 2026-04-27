@@ -94,7 +94,7 @@ export function Careers() {
               <Briefcase className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No Recommendations Yet</h3>
               <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
-                Complete at least 10 AI reflections to unlock personalized career matches.
+                Complete at least 1 AI reflection to unlock personalized career matches.
               </p>
               <div className="flex gap-3 justify-center flex-wrap">
                 <Button onClick={() => navigate('/reflection')} icon={MessageSquare}>Start Reflecting</Button>
