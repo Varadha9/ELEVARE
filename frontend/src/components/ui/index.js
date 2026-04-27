@@ -1,3 +1,5 @@
+// Re-export all UI components from a single entry point
+// This allows pages to import from '../components/ui' instead of individual files
 export { Card, CardHeader, CardTitle, CardDescription, CardContent } from './Card';
 export { Button } from './Button';
 export { Progress } from './Progress';

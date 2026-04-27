@@ -56,7 +56,7 @@ export function Reflection() {
           timestamp: new Date(),
         }]);
       } else {
-        const sorted = [...convs].reverse();
+        const sorted = [...convs];
         setMessages(sorted.flatMap(c => [
           { role: 'user',      content: c.userMessage, timestamp: c.timestamp },
           { role: 'assistant', content: c.aiResponse,  timestamp: c.timestamp },

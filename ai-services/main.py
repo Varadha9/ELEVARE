@@ -1,32 +1,44 @@
+# FastAPI — modern Python web framework for building APIs
 from fastapi import FastAPI, HTTPException
+# Pydantic — data validation using Python type hints
 from pydantic import BaseModel
 from typing import List, Dict, Optional
+# Uvicorn — ASGI server that runs the FastAPI app
 import uvicorn
+
+# Import AI service modules
 from services.nlp_processor import NLPProcessor
 from services.behavioral_analyzer import BehavioralAnalyzer
 from services.conversational_agent import ConversationalAgent
 from services.recommendation_engine import RecommendationEngine
 from utils.database import DatabaseManager
 from data.career_data import CAREER_DATABASE
+
+# BSON ObjectId handling for MongoDB IDs
 from bson import ObjectId
 from bson.errors import InvalidId
 
+# parse_user_id — converts string user IDs to MongoDB ObjectId format
+# Falls back to the original string if conversion fails (for in-memory DB mode)
 def parse_user_id(user_id: str):
     try:
         return ObjectId(user_id)
     except (InvalidId, Exception):
         return user_id
 
+# Initialize FastAPI app with metadata
 app = FastAPI(title="ELEVARE AI Services", version="1.0.0")
 
-# Initialize services
+# Initialize all AI service components once at startup
+# These are reused across all requests for efficiency
 nlp_processor = NLPProcessor()
 behavioral_analyzer = BehavioralAnalyzer()
 conversational_agent = ConversationalAgent()
 db_manager = DatabaseManager()
 recommendation_engine = RecommendationEngine(CAREER_DATABASE)
 
-# Request models
+# Pydantic models define the expected request body structure
+# FastAPI automatically validates incoming JSON against these schemas
 class ProcessMessageRequest(BaseModel):
     userId: str
     message: str
@@ -41,21 +53,25 @@ class FeedbackRequest(BaseModel):
     interested: bool
     rating: Optional[int] = None
 
+# Root endpoint — returns service status
 @app.get("/")
 def root():
     return {"message": "ELEVARE AI Services", "status": "running"}
 
+# /process — main endpoint called by the backend for every user message
+# Runs NLP analysis, updates behavioral traits, and generates an LLM response
 @app.post("/process")
 async def process_message(request: ProcessMessageRequest):
     """Process user message with NLP and generate AI response"""
     try:
-        # NLP Processing
+        # Step 1: Run NLP analysis on the user's message
+        # Extracts emotions, sentiment, keywords, and detected traits
         analysis = nlp_processor.process_message(request.message)
         
-        # Get user profile
+        # Step 2: Fetch the user's current profile from MongoDB
         user_profile = db_manager.get_user_profile(parse_user_id(request.userId))
 
-        # Fall back to default profile so LLM still responds even without DB
+        # Fallback profile if DB is unavailable — ensures LLM still responds
         if not user_profile:
             user_profile = {
                 'behavioralTraits': {
@@ -70,12 +86,13 @@ async def process_message(request: ProcessMessageRequest):
                 'interests': []
             }
         
-        # Update behavioral traits
+        # Step 3: Update behavioral traits using EWMA (Exponentially Weighted Moving Average)
+        # Blends current trait values with newly detected signals
         current_traits = user_profile.get('behavioralTraits', {})
         detected_traits = analysis.get('detectedTraits', {})
         updated_traits = behavioral_analyzer.update_traits(current_traits, detected_traits)
         
-        # Update personality
+        # Step 4: Update Big Five personality traits using the same EWMA approach
         current_personality = user_profile.get('personality', {})
         personality_signals = analysis.get('personalitySignals', {})
         updated_personality = behavioral_analyzer.update_personality(
@@ -83,28 +100,30 @@ async def process_message(request: ProcessMessageRequest):
             personality_signals
         )
         
-        # Update Ikigai
+        # Step 5: Recalculate Ikigai alignment based on updated traits
         interests = user_profile.get('interests', [])
         updated_ikigai = behavioral_analyzer.calculate_ikigai_alignment(
             user_profile,
             interests
         )
 
-        # Save all updates to database
+        # Step 6: Persist all updates to MongoDB
         db_manager.update_user_profile(parse_user_id(request.userId), {
             'behavioralTraits': updated_traits,
             'personality': updated_personality,
             'ikigai': updated_ikigai
         })
         
-        # Generate AI response with LLM
+        # Step 7: Generate AI response using Groq LLM (Llama 3.3 70B)
+        # Passes NLP analysis and user profile for context-aware responses
         response = conversational_agent.generate_response(
             request.message,
             analysis,
             request.conversationHistory,
-            user_profile  # Pass user profile for context
+            user_profile
         )
         
+        # Return the AI response, NLP analysis, and trait updates to the backend
         return {
             "response": response,
             "analysis": {
@@ -125,17 +144,18 @@ async def process_message(request: ProcessMessageRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# /recommend — generates career recommendations based on the user's profile
 @app.post("/recommend")
 async def generate_recommendations(request: RecommendationRequest):
     """Generate career recommendations based on user profile"""
     try:
-        # Get user profile
+        # Fetch the user's profile from MongoDB
         user_profile = db_manager.get_user_profile(parse_user_id(request.userId))
         
         if not user_profile:
             raise HTTPException(status_code=404, detail="User profile not found")
         
-        # Generate recommendations
+        # Run the recommendation engine — computes psychometric, Ikigai, and market scores
         recommendations = recommendation_engine.generate_recommendations(user_profile)
         
         return {"recommendations": recommendations}
@@ -143,6 +163,8 @@ async def generate_recommendations(request: RecommendationRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# /feedback — processes user feedback on career recommendations
+# Used to improve future recommendations via the feedback loop
 @app.post("/feedback")
 async def process_feedback(request: FeedbackRequest):
     """Process user feedback on recommendations"""
@@ -159,10 +181,12 @@ async def process_feedback(request: FeedbackRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# /health — health check endpoint used by monitoring tools
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "services": ["nlp", "behavioral", "recommendation"]}
 
+# Entry point — starts the Uvicorn server when running this file directly
 if __name__ == "__main__":
     print("🤖 Starting ELEVARE AI Services...")
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,61 +1,80 @@
+// React Router — handles client-side navigation without full page reloads
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+// AnimatePresence — enables exit animations when routes change
 import { AnimatePresence } from 'framer-motion';
+// Global auth state provider and hook
 import { AuthProvider, useAuth } from './context/AuthContext';
+// Global toast notification system
 import { ToastProvider } from './components/ui/Toast';
+// Catches unhandled React errors and shows a friendly fallback UI
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+// Full-screen loading spinner shown while auth state is being determined
 import { Loading } from './components/ui/Loading';
-import { Home } from './pages/Home';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { Dashboard } from './pages/Dashboard';
-import { Reflection } from './pages/Reflection';
-import { Personality } from './pages/Personality';
-import { Careers } from './pages/Careers';
-import { Ikigai } from './pages/Ikigai';
-import { Progress } from './pages/ProgressTracking';
-import { Settings } from './pages/Settings';
-import { NotFound } from './pages/NotFound';
 
+// Page imports
+import { Home }        from './pages/Home';
+import { Login }       from './pages/Login';
+import { Register }    from './pages/Register';
+import { Dashboard }   from './pages/Dashboard';
+import { Reflection }  from './pages/Reflection';
+import { Personality } from './pages/Personality';
+import { Careers }     from './pages/Careers';
+import { Ikigai }      from './pages/Ikigai';
+import { Progress }    from './pages/ProgressTracking';
+import { Settings }    from './pages/Settings';
+import { NotFound }    from './pages/NotFound';
+
+// ProtectedRoute — redirects unauthenticated users to /login
+// Wraps all pages that require a logged-in user
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
+  // replace prevents the login page from being added to browser history
   return user ? children : <Navigate to="/login" replace />;
 }
 
+// AnimatedRoutes — renders routes with page transition animations
+// useLocation is needed so AnimatePresence can detect route changes
 function AnimatedRoutes() {
   const location = useLocation();
   return (
+    // mode="wait" ensures the exit animation completes before the next page enters
     <AnimatePresence mode="wait">
+      {/* key={location.pathname} forces re-mount on route change, triggering animations */}
       <Routes location={location} key={location.pathname}>
-        {/* Public */}
+        {/* Public routes — accessible without login */}
         <Route path="/"         element={<ErrorBoundary><Home /></ErrorBoundary>} />
         <Route path="/login"    element={<ErrorBoundary><Login /></ErrorBoundary>} />
         <Route path="/register" element={<ErrorBoundary><Register /></ErrorBoundary>} />
 
-        {/* Protected */}
-        <Route path="/dashboard"  element={<ProtectedRoute><ErrorBoundary><Dashboard /></ErrorBoundary></ProtectedRoute>} />
-        <Route path="/reflection" element={<ProtectedRoute><ErrorBoundary><Reflection /></ErrorBoundary></ProtectedRoute>} />
-        <Route path="/personality"element={<ProtectedRoute><ErrorBoundary><Personality /></ErrorBoundary></ProtectedRoute>} />
-        <Route path="/careers"    element={<ProtectedRoute><ErrorBoundary><Careers /></ErrorBoundary></ProtectedRoute>} />
-        <Route path="/ikigai"     element={<ProtectedRoute><ErrorBoundary><Ikigai /></ErrorBoundary></ProtectedRoute>} />
-        <Route path="/progress"   element={<ProtectedRoute><ErrorBoundary><Progress /></ErrorBoundary></ProtectedRoute>} />
-        <Route path="/settings"   element={<ProtectedRoute><ErrorBoundary><Settings /></ErrorBoundary></ProtectedRoute>} />
+        {/* Protected routes — redirect to /login if not authenticated */}
+        <Route path="/dashboard"   element={<ProtectedRoute><ErrorBoundary><Dashboard /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/reflection"  element={<ProtectedRoute><ErrorBoundary><Reflection /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/personality" element={<ProtectedRoute><ErrorBoundary><Personality /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/careers"     element={<ProtectedRoute><ErrorBoundary><Careers /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/ikigai"      element={<ProtectedRoute><ErrorBoundary><Ikigai /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/progress"    element={<ProtectedRoute><ErrorBoundary><Progress /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/settings"    element={<ProtectedRoute><ErrorBoundary><Settings /></ErrorBoundary></ProtectedRoute>} />
 
-        {/* 404 */}
+        {/* Catch-all — shows 404 page for any unknown route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
   );
 }
 
+// AppContent — reads auth loading state and shows spinner until auth is resolved
+// Prevents a flash of the login page before the token is validated
 function AppContent() {
   const { loading } = useAuth();
 
+  // Restore dark mode preference from localStorage on app startup
   useEffect(() => {
     const darkMode = localStorage.getItem('darkMode') === 'true';
     if (darkMode) document.documentElement.classList.add('dark');
   }, []);
 
+  // Show full-screen loader while checking if the user is already logged in
   if (loading) {
     return <Loading fullScreen message="Starting ELEVARE..." />;
   }
@@ -63,11 +82,13 @@ function AppContent() {
   return <AnimatedRoutes />;
 }
 
+// App — root component that wraps everything with global providers
+// Order matters: AuthProvider must wrap Router so auth state is available in route components
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <Router>
+    <AuthProvider>       {/* Provides user/login/logout to all components */}
+      <ToastProvider>    {/* Provides toast() notification function globally */}
+        <Router>         {/* Enables client-side routing */}
           <AppContent />
         </Router>
       </ToastProvider>
