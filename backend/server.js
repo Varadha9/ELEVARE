@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import helmet from 'helmet';
+import mongoSanitize from 'express-mongo-sanitize';
+import { body, validationResult } from 'express-validator';
 
 // Load environment variables
 dotenv.config();
@@ -167,22 +170,62 @@ if (USE_MEMORY_DB) {
   };
 }
 
-// Middleware
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true
+// Security Middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
 }));
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+// CORS Configuration
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : ['http://localhost:3000'];
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 500,
-  message: { success: false, error: { message: 'Too many requests from this IP, please try again later.' } }
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Body Parser & Sanitization
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(mongoSanitize());
+
+// Global Rate Limiting
+const globalLimiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  message: { success: false, error: { message: 'Too many requests, please try again later.' } },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
-app.use('/api/', limiter);
+
+// Stricter rate limit for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  skipSuccessfulRequests: true,
+  message: { success: false, error: { message: 'Too many authentication attempts, please try again later.' } }
+});
+
+app.use('/api/', globalLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // Utility functions
 const createInitialProfile = (userId) => ({
@@ -213,6 +256,22 @@ const createInitialProfile = (userId) => ({
   conversationCount: 0,
   profileCompleteness: 20
 });
+
+// Validation helper
+const handleValidation = (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({
+      success: false,
+      error: {
+        message: 'Validation failed',
+        details: errors.array().map(e => ({ field: e.path, message: e.msg }))
+      }
+    });
+    return false;
+  }
+  return true;
+};
 
 // JWT middleware
 const verifyToken = (req, res, next) => {
@@ -259,24 +318,16 @@ app.get('/health', (req, res) => {
 });
 
 // Auth Routes
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { name, email, password, age, education } = req.body;
-    
-    // Validation
-    if (!name || !email || !password || !age || !education) {
-      return res.status(400).json({
-        success: false,
-        error: { message: 'All fields are required' }
-      });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        error: { message: 'Password must be at least 6 characters long' }
-      });
-    }
+app.post('/api/auth/register',
+  [
+    body('name').trim().isLength({ min: 2, max: 50 }).withMessage('Name must be 2-50 characters'),
+    body('email').trim().isEmail().withMessage('Valid email required').normalizeEmail(),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+    body('age').isInt({ min: 13, max: 100 }).withMessage('Age must be between 13 and 100'),
+    body('education').isIn(['high_school', 'undergraduate', 'graduate', 'postgraduate', 'other']).withMessage('Invalid education level')
+  ],
+  async (req, res) => {
+  if (!handleValidation(req, res)) return;
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -358,16 +409,13 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: { message: 'Email and password are required' }
-      });
-    }
+app.post('/api/auth/login',
+  [
+    body('email').trim().isEmail().withMessage('Valid email required').normalizeEmail(),
+    body('password').notEmpty().withMessage('Password is required')
+  ],
+  async (req, res) => {
+  if (!handleValidation(req, res)) return;
 
     let user;
 
@@ -467,7 +515,11 @@ app.get('/api/profile', verifyToken, async (req, res) => {
 });
 
 // Conversation Routes
-app.post('/api/conversations/message', verifyToken, async (req, res) => {
+app.post('/api/conversations/message',
+  verifyToken,
+  [body('message').trim().isLength({ min: 1, max: 2000 }).withMessage('Message must be 1-2000 characters')],
+  async (req, res) => {
+  if (!handleValidation(req, res)) return;
   try {
     const { message } = req.body;
     

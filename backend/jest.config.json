@@ -1,0 +1,12 @@
+{
+  "testEnvironment": "node",
+  "transform": {},
+  "testMatch": ["**/tests/**/*.test.js"],
+  "collectCoverageFrom": [
+    "**/*.js",
+    "!**/node_modules/**",
+    "!**/tests/**"
+  ],
+  "coveragePathIgnorePatterns": ["/node_modules/"],
+  "testTimeout": 30000
+}

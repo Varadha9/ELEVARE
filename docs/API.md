@@ -1,206 +1,155 @@
-# ELEVARE - API Documentation
+# API Reference
 
-## 🌐 Base URL
-```
-Development: http://localhost:5000/api
-Production: https://api.elevare.com/api
-```
+**Base URL:** `http://localhost:5000` (development) · `https://your-backend.com` (production)
 
-## 🔐 Authentication
-
-All protected endpoints require JWT token in the Authorization header:
+All protected endpoints require:
+```http
+Authorization: Bearer <jwt_token>
 ```
-Authorization: Bearer <your_jwt_token>
-```
-
-### Token Lifecycle
-- **Expiration**: 7 days (configurable)
-- **Refresh**: Automatic on valid requests
-- **Revocation**: Logout endpoint
 
 ---
 
-## 📋 API Endpoints Overview
+## Authentication
 
-| Category | Endpoint | Method | Auth | Description |
-|----------|----------|--------|------|-------------|
-| **Auth** | `/auth/register` | POST | ❌ | User registration |
-| **Auth** | `/auth/login` | POST | ❌ | User login |
-| **Auth** | `/auth/logout` | POST | ✅ | User logout |
-| **Profile** | `/profile` | GET | ✅ | Get user profile |
-| **Profile** | `/profile` | PUT | ✅ | Update profile |
-| **Chat** | `/conversations/message` | POST | ✅ | Send message |
-| **Chat** | `/conversations/history` | GET | ✅ | Get chat history |
-| **Recommendations** | `/recommendations/generate` | POST | ✅ | Generate recommendations |
-| **Recommendations** | `/recommendations` | GET | ✅ | Get recommendations |
-| **Analytics** | `/analytics/traits` | GET | ✅ | Get behavioral traits |
-| **Analytics** | `/analytics/personality` | GET | ✅ | Get personality data |
+### Register
 
----
-
-## 🔑 Authentication Endpoints
-
-### Register User
 ```http
 POST /api/auth/register
-Content-Type: application/json
+```
 
+**Body:**
+```json
 {
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "password123",
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "SecurePass1",
   "age": 22,
   "education": "undergraduate"
 }
 ```
 
-**Response (201 Created):**
+Education values: `high_school` · `undergraduate` · `graduate` · `postgraduate` · `other`
+
+**Response `201`:**
 ```json
 {
   "success": true,
-  "message": "User registered successfully",
   "data": {
-    "user": {
-      "id": "64f8a1b2c3d4e5f6a7b8c9d0",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "age": 22,
-      "education": "undergraduate",
-      "createdAt": "2024-01-15T10:30:00.000Z"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "user": { "id": "...", "name": "Jane Doe", "email": "jane@example.com" },
+    "token": "<jwt>"
   }
 }
 ```
 
-**Validation Rules:**
-- `name`: Required, 2-50 characters
-- `email`: Required, valid email format, unique
-- `password`: Required, minimum 6 characters
-- `age`: Required, 16-100 years
-- `education`: Required, enum: ["high_school", "undergraduate", "graduate", "postgraduate"]
+**Validation rules:**
+- `name` — 2–50 characters, letters and spaces only
+- `email` — valid email format, unique
+- `password` — min 8 chars, must include uppercase, lowercase, number
+- `age` — integer 13–100
+- `education` — one of the values above
 
-### Login User
+---
+
+### Login
+
 ```http
 POST /api/auth/login
-Content-Type: application/json
+```
 
+**Body:**
+```json
 {
-  "email": "john@example.com",
-  "password": "password123"
+  "email": "jane@example.com",
+  "password": "SecurePass1"
 }
 ```
 
-**Response (200 OK):**
+**Response `200`:**
 ```json
 {
   "success": true,
-  "message": "Login successful",
   "data": {
-    "user": {
-      "id": "64f8a1b2c3d4e5f6a7b8c9d0",
-      "name": "John Doe",
-      "email": "john@example.com"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "user": { "id": "...", "name": "Jane Doe", "email": "jane@example.com" },
+    "token": "<jwt>"
   }
-}
-```
-
-### Logout User
-```http
-POST /api/auth/logout
-Authorization: Bearer <token>
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Logout successful"
 }
 ```
 
 ---
 
-## 👤 Profile Endpoints
+### Change Password
 
-### Get User Profile
+```http
+PUT /api/auth/change-password
+Authorization: Bearer <token>
+```
+
+**Body:**
+```json
+{
+  "currentPassword": "OldPass1",
+  "newPassword": "NewPass1"
+}
+```
+
+---
+
+### Delete Account
+
+```http
+DELETE /api/auth/account
+Authorization: Bearer <token>
+```
+
+Permanently deletes the user, profile, and all conversations.
+
+---
+
+## Profile
+
+### Get Profile
+
 ```http
 GET /api/profile
 Authorization: Bearer <token>
 ```
 
-**Response (200 OK):**
+**Response `200`:**
 ```json
 {
   "success": true,
   "data": {
     "user": {
-      "id": "64f8a1b2c3d4e5f6a7b8c9d0",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "age": 22,
-      "education": "undergraduate",
-      "createdAt": "2024-01-15T10:30:00.000Z"
+      "id": "...", "name": "Jane Doe", "email": "jane@example.com",
+      "age": 22, "education": "undergraduate"
     },
     "profile": {
       "behavioralTraits": {
-        "creativity": 7.2,
-        "analyticalThinking": 8.1,
-        "leadership": 6.5,
-        "teamwork": 7.8,
-        "communication": 7.0,
-        "problemSolving": 8.3,
-        "adaptability": 6.9,
-        "empathy": 7.5
+        "creativity": 6.8,
+        "analyticalThinking": 7.2,
+        "leadership": 5.5,
+        "teamwork": 7.0,
+        "communication": 6.5,
+        "problemSolving": 7.8,
+        "adaptability": 6.0,
+        "empathy": 6.3
       },
       "personality": {
-        "openness": 0.75,
-        "conscientiousness": 0.82,
-        "extraversion": 0.68,
-        "agreeableness": 0.71,
-        "neuroticism": 0.35
+        "openness": 0.72,
+        "conscientiousness": 0.68,
+        "extraversion": 0.55,
+        "agreeableness": 0.70,
+        "neuroticism": 0.32
       },
       "ikigai": {
-        "whatYouLove": ["technology", "problem-solving", "creativity"],
-        "whatYoureGoodAt": ["programming", "analysis", "communication"],
-        "whatTheWorldNeeds": ["innovation", "efficiency", "accessibility"],
-        "whatYouCanBePaidFor": ["software development", "consulting", "teaching"]
+        "whatYouLove": ["technology", "problem-solving"],
+        "whatYouAreGoodAt": ["programming", "analysis"],
+        "whatTheWorldNeeds": ["innovation"],
+        "whatYouCanBePaidFor": ["software development"]
       },
-      "conversationCount": 15,
-      "lastActive": "2024-01-20T14:30:00.000Z",
-      "profileCompleteness": 85
-    }
-  }
-}
-```
-
-### Update User Profile
-```http
-PUT /api/profile
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "name": "John Smith",
-  "age": 23,
-  "education": "graduate"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Profile updated successfully",
-  "data": {
-    "user": {
-      "id": "64f8a1b2c3d4e5f6a7b8c9d0",
-      "name": "John Smith",
-      "email": "john@example.com",
-      "age": 23,
-      "education": "graduate"
+      "conversationCount": 12,
+      "profileCompleteness": 75,
+      "streak": 4
     }
   }
 }
@@ -208,315 +157,282 @@ Content-Type: application/json
 
 ---
 
-## 💬 Conversation Endpoints
+### Update Profile
 
-### Send Message
 ```http
-POST /api/conversations/message
+PUT /api/profile
 Authorization: Bearer <token>
-Content-Type: application/json
+```
 
+**Body:**
+```json
 {
-  "message": "I really enjoyed working on the coding project today. It was challenging but rewarding."
+  "name": "Jane Smith",
+  "email": "jane.smith@example.com"
 }
 ```
 
-**Response (200 OK):**
+---
+
+### Export Data
+
+```http
+GET /api/profile/export
+Authorization: Bearer <token>
+```
+
+Returns all user data including profile and conversation history (up to 100 conversations).
+
+---
+
+## Conversations
+
+### Send Message
+
+```http
+POST /api/conversations/message
+Authorization: Bearer <token>
+```
+
+**Body:**
+```json
+{
+  "message": "I really enjoyed solving that algorithm problem today"
+}
+```
+
+Message must be 1–2000 characters.
+
+**Response `200`:**
 ```json
 {
   "success": true,
   "data": {
     "conversation": {
-      "id": "64f8a1b2c3d4e5f6a7b8c9d1",
-      "userId": "64f8a1b2c3d4e5f6a7b8c9d0",
-      "userMessage": "I really enjoyed working on the coding project today. It was challenging but rewarding.",
-      "aiResponse": "That's wonderful to hear! It sounds like you found a great balance between challenge and achievement. What specific aspects of the coding project did you find most engaging?",
-      "analysis": {
-        "sentiment": 0.8,
-        "emotions": {
-          "joy": 0.7,
-          "satisfaction": 0.8,
-          "engagement": 0.9
-        },
-        "keywords": ["coding", "project", "challenging", "rewarding"],
-        "traitIndicators": {
-          "problemSolving": 0.8,
-          "creativity": 0.6,
-          "analyticalThinking": 0.7
-        }
-      },
-      "timestamp": "2024-01-20T14:30:00.000Z"
+      "id": "...",
+      "userMessage": "I really enjoyed solving that algorithm problem today",
+      "aiResponse": "That sounds rewarding! What made that problem particularly satisfying to work through?",
+      "timestamp": "2025-01-15T10:30:00.000Z"
+    },
+    "analysis": {
+      "sentiment": 0.7,
+      "emotions": { "joy": 0.6, "engagement": 0.8 },
+      "keywords": ["algorithm", "problem", "solving"],
+      "detectedTraits": [
+        { "trait": "analyticalThinking", "value": 7.5 },
+        { "trait": "problemSolving", "value": 8.0 }
+      ]
     },
     "updatedTraits": {
-      "problemSolving": 8.4,
-      "creativity": 7.3,
-      "analyticalThinking": 8.2
+      "creativity": 6.8,
+      "analyticalThinking": 7.3,
+      "problemSolving": 7.9
     }
   }
 }
 ```
 
+---
+
 ### Get Conversation History
+
 ```http
-GET /api/conversations/history?page=1&limit=10
+GET /api/conversations/history
 Authorization: Bearer <token>
 ```
 
-**Query Parameters:**
-- `page`: Page number (default: 1)
-- `limit`: Items per page (default: 10, max: 50)
-- `startDate`: Filter from date (ISO format)
-- `endDate`: Filter to date (ISO format)
+Returns up to 50 conversations, sorted oldest to newest.
 
-**Response (200 OK):**
+**Response `200`:**
 ```json
 {
   "success": true,
   "data": {
     "conversations": [
       {
-        "id": "64f8a1b2c3d4e5f6a7b8c9d1",
-        "userMessage": "I really enjoyed working on the coding project today.",
-        "aiResponse": "That's wonderful to hear! What specific aspects did you find most engaging?",
-        "sentiment": 0.8,
-        "timestamp": "2024-01-20T14:30:00.000Z"
+        "id": "...",
+        "userMessage": "I enjoyed coding today",
+        "aiResponse": "That's great! What specifically did you enjoy?",
+        "sentiment": 0.7,
+        "timestamp": "2025-01-15T10:30:00.000Z"
       }
     ],
-    "pagination": {
-      "currentPage": 1,
-      "totalPages": 3,
-      "totalItems": 25,
-      "hasNext": true,
-      "hasPrev": false
-    }
+    "total": 12
   }
 }
 ```
 
 ---
 
-## 🎯 Recommendation Endpoints
+## Recommendations
+
+### Get Recommendations
+
+```http
+GET /api/recommendations
+Authorization: Bearer <token>
+```
+
+Returns recommendations based on the user's current profile. Requires at least 1 conversation.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "careerTitle": "Software Engineer",
+      "category": "Technology",
+      "confidenceScore": 87,
+      "reasoning": "Strong analytical and problem-solving traits",
+      "matchedTraits": ["analyticalThinking", "problemSolving", "creativity"],
+      "requiredSkills": ["Programming", "Problem Solving", "Logical Thinking"],
+      "averageSalary": "$95,000",
+      "growthRate": "22%"
+    }
+  ]
+}
+```
+
+---
 
 ### Generate Recommendations
+
 ```http
 POST /api/recommendations/generate
 Authorization: Bearer <token>
 ```
 
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Recommendations generated successfully",
-  "data": {
-    "recommendations": [
-      {
-        "career": "Software Engineer",
-        "matchScore": 0.92,
-        "confidence": 0.88,
-        "reasoning": {
-          "strengths": [
-            "High analytical thinking (8.2/10)",
-            "Strong problem-solving skills (8.4/10)",
-            "Good creativity scores (7.3/10)"
-          ],
-          "ikigaiAlignment": {
-            "love": 0.9,
-            "good": 0.95,
-            "need": 0.85,
-            "paid": 0.9
-          },
-          "personalityFit": {
-            "openness": "High creativity and innovation",
-            "conscientiousness": "Detail-oriented and reliable",
-            "extraversion": "Good for team collaboration"
-          }
-        },
-        "careerDetails": {
-          "description": "Design, develop, and maintain software applications",
-          "averageSalary": "$95,000",
-          "growthRate": "22%",
-          "requiredSkills": ["Programming", "Problem Solving", "Teamwork"],
-          "educationLevel": "Bachelor's Degree",
-          "workEnvironment": "Office/Remote"
-        }
-      }
-    ],
-    "generatedAt": "2024-01-20T14:30:00.000Z",
-    "basedOnConversations": 15
-  }
-}
-```
+Triggers recommendation generation from the AI service. Requires at least 1 conversation.
 
-### Get Recommendations
+---
+
+## Health
+
 ```http
-GET /api/recommendations?page=1&limit=5
-Authorization: Bearer <token>
+GET /health
 ```
 
-**Response (200 OK):**
+**Response `200`:**
 ```json
 {
-  "success": true,
-  "data": {
-    "recommendations": [
-      {
-        "id": "64f8a1b2c3d4e5f6a7b8c9d2",
-        "career": "Software Engineer",
-        "matchScore": 0.92,
-        "confidence": 0.88,
-        "feedback": null,
-        "createdAt": "2024-01-20T14:30:00.000Z"
-      }
-    ],
-    "pagination": {
-      "currentPage": 1,
-      "totalPages": 2,
-      "totalItems": 8
-    }
+  "status": "healthy",
+  "timestamp": "2025-01-15T10:00:00.000Z",
+  "uptime": 3600,
+  "environment": "production",
+  "services": {
+    "database": { "status": "healthy", "type": "mongodb" },
+    "aiService": { "status": "healthy" }
+  },
+  "memory": {
+    "heapUsed": "45 MB",
+    "heapTotal": "75 MB"
   }
 }
 ```
 
-### Provide Recommendation Feedback
+Status can be `healthy` (200) or `degraded` (503).
+
+---
+
+## AI Service Endpoints
+
+**Base URL:** `http://localhost:8000`
+
+### Process Message
+
 ```http
-POST /api/recommendations/:id/feedback
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "rating": 4,
-  "helpful": true,
-  "comments": "Very accurate recommendation, matches my interests well"
-}
+POST /process
 ```
 
-**Response (200 OK):**
+**Body:**
 ```json
 {
-  "success": true,
-  "message": "Feedback recorded successfully",
-  "data": {
-    "recommendation": {
-      "id": "64f8a1b2c3d4e5f6a7b8c9d2",
-      "feedback": {
-        "rating": 4,
-        "helpful": true,
-        "comments": "Very accurate recommendation, matches my interests well",
-        "submittedAt": "2024-01-20T15:00:00.000Z"
-      }
-    }
-  }
+  "userId": "user_id",
+  "message": "I love solving complex problems",
+  "conversationHistory": [
+    { "role": "user", "content": "previous message" },
+    { "role": "assistant", "content": "previous response" }
+  ]
 }
 ```
 
 ---
 
-## 📊 Analytics Endpoints
+### Generate Recommendations
 
-### Get Behavioral Traits
 ```http
-GET /api/analytics/traits?period=30d
-Authorization: Bearer <token>
+POST /recommend
 ```
 
-**Query Parameters:**
-- `period`: Time period (7d, 30d, 90d, all)
-
-**Response (200 OK):**
+**Body:**
 ```json
 {
-  "success": true,
-  "data": {
-    "currentTraits": {
-      "creativity": 7.3,
-      "analyticalThinking": 8.2,
-      "leadership": 6.5,
-      "teamwork": 7.8,
-      "communication": 7.0,
-      "problemSolving": 8.4,
-      "adaptability": 6.9,
-      "empathy": 7.5
-    },
-    "traitHistory": [
-      {
-        "date": "2024-01-15",
-        "traits": {
-          "creativity": 7.0,
-          "analyticalThinking": 8.0,
-          "problemSolving": 8.1
-        }
-      }
-    ],
-    "traitTrends": {
-      "creativity": 0.3,
-      "analyticalThinking": 0.2,
-      "problemSolving": 0.3
-    }
-  }
-}
-```
-
-### Get Personality Analysis
-```http
-GET /api/analytics/personality
-Authorization: Bearer <token>
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "data": {
-    "personality": {
-      "openness": {
-        "score": 0.75,
-        "description": "High openness to experience",
-        "traits": ["Creative", "Curious", "Open-minded"]
-      },
-      "conscientiousness": {
-        "score": 0.82,
-        "description": "Highly conscientious",
-        "traits": ["Organized", "Reliable", "Goal-oriented"]
-      },
-      "extraversion": {
-        "score": 0.68,
-        "description": "Moderately extraverted",
-        "traits": ["Social", "Energetic", "Assertive"]
-      },
-      "agreeableness": {
-        "score": 0.71,
-        "description": "Highly agreeable",
-        "traits": ["Cooperative", "Trusting", "Helpful"]
-      },
-      "neuroticism": {
-        "score": 0.35,
-        "description": "Low neuroticism",
-        "traits": ["Calm", "Stable", "Confident"]
-      }
-    },
-    "personalityType": "ENFJ",
-    "lastUpdated": "2024-01-20T14:30:00.000Z"
-  }
+  "userId": "user_id"
 }
 ```
 
 ---
 
-## ❌ Error Responses
+### Submit Feedback
 
-### Standard Error Format
+```http
+POST /feedback
+```
+
+**Body:**
+```json
+{
+  "userId": "user_id",
+  "careerTitle": "Software Engineer",
+  "interested": true,
+  "rating": 4
+}
+```
+
+---
+
+### AI Health
+
+```http
+GET /health
+```
+
+```json
+{
+  "status": "healthy",
+  "services": ["nlp", "behavioral", "recommendation"],
+  "groq_api_configured": true,
+  "mongodb_configured": true,
+  "environment": "production"
+}
+```
+
+---
+
+## Error Responses
+
+All errors follow this format:
+
 ```json
 {
   "success": false,
   "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Invalid input data",
+    "message": "Description of the error"
+  }
+}
+```
+
+Validation errors include a `details` array:
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Validation failed",
     "details": [
-      {
-        "field": "email",
-        "message": "Email is required"
-      }
+      { "field": "email", "message": "Please provide a valid email address" },
+      { "field": "password", "message": "Password must be at least 8 characters long" }
     ]
   }
 }
@@ -524,176 +440,112 @@ Authorization: Bearer <token>
 
 ### HTTP Status Codes
 
-| Code | Description | Common Causes |
-|------|-------------|---------------|
-| **400** | Bad Request | Invalid input, validation errors |
-| **401** | Unauthorized | Missing/invalid token |
-| **403** | Forbidden | Insufficient permissions |
-| **404** | Not Found | Resource doesn't exist |
-| **409** | Conflict | Duplicate email, resource conflict |
-| **429** | Too Many Requests | Rate limit exceeded |
-| **500** | Internal Server Error | Server-side errors |
-
-### Error Codes
-
-| Code | Description |
-|------|-------------|
-| `VALIDATION_ERROR` | Input validation failed |
-| `AUTHENTICATION_ERROR` | Invalid credentials |
-| `AUTHORIZATION_ERROR` | Insufficient permissions |
-| `NOT_FOUND` | Resource not found |
-| `DUPLICATE_RESOURCE` | Resource already exists |
-| `RATE_LIMIT_EXCEEDED` | Too many requests |
-| `INTERNAL_ERROR` | Server-side error |
+| Code | Meaning |
+|------|---------|
+| `200` | Success |
+| `201` | Created |
+| `400` | Bad request / validation failed |
+| `401` | Unauthorized — missing or invalid token |
+| `404` | Resource not found |
+| `409` | Conflict — email already exists |
+| `429` | Rate limit exceeded |
+| `500` | Internal server error |
 
 ---
 
-## 🔒 Rate Limiting
+## Rate Limiting
 
-### Limits
-- **Authentication**: 5 requests per minute
-- **General API**: 100 requests per 15 minutes
-- **AI Processing**: 10 requests per minute
+| Endpoint | Limit |
+|----------|-------|
+| Auth routes (login/register) | 10 requests / 15 min |
+| All other API routes | 100 requests / 15 min |
 
-### Headers
+Rate limit headers are included on all responses:
 ```
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1642694400
+RateLimit-Limit: 100
+RateLimit-Remaining: 95
+RateLimit-Reset: 1642694400
 ```
 
 ---
 
-## 📝 Request/Response Examples
+## Code Examples
 
-### cURL Examples
+### JavaScript (fetch)
 
-**Register User:**
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "password": "password123",
-    "age": 22,
-    "education": "undergraduate"
-  }'
-```
-
-**Send Message:**
-```bash
-curl -X POST http://localhost:5000/api/conversations/message \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{
-    "message": "I enjoyed coding today"
-  }'
-```
-
-### JavaScript Examples
-
-**Using Fetch API:**
 ```javascript
-// Register user
-const registerUser = async (userData) => {
-  const response = await fetch('/api/auth/register', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(userData)
-  });
-  return response.json();
-};
+// Register
+const res = await fetch('http://localhost:5000/api/auth/register', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    name: 'Jane Doe',
+    email: 'jane@example.com',
+    password: 'SecurePass1',
+    age: 22,
+    education: 'undergraduate'
+  })
+});
+const { data } = await res.json();
+const token = data.token;
 
-// Send message with authentication
-const sendMessage = async (message, token) => {
-  const response = await fetch('/api/conversations/message', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({ message })
-  });
-  return response.json();
-};
+// Send message
+const msgRes = await fetch('http://localhost:5000/api/conversations/message', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({ message: 'I enjoyed coding today' })
+});
 ```
 
-### Python Examples
+### Python (requests)
 
-**Using Requests:**
 ```python
 import requests
 
-# Register user
-def register_user(user_data):
-    response = requests.post(
-        'http://localhost:5000/api/auth/register',
-        json=user_data
-    )
-    return response.json()
+BASE = 'http://localhost:5000/api'
+
+# Login
+res = requests.post(f'{BASE}/auth/login', json={
+    'email': 'jane@example.com',
+    'password': 'SecurePass1'
+})
+token = res.json()['data']['token']
+
+# Get profile
+profile = requests.get(f'{BASE}/profile', headers={
+    'Authorization': f'Bearer {token}'
+}).json()
 
 # Send message
-def send_message(message, token):
-    headers = {'Authorization': f'Bearer {token}'}
-    response = requests.post(
-        'http://localhost:5000/api/conversations/message',
-        json={'message': message},
-        headers=headers
-    )
-    return response.json()
+msg = requests.post(f'{BASE}/conversations/message',
+    json={'message': 'I enjoy solving problems'},
+    headers={'Authorization': f'Bearer {token}'}
+).json()
 ```
 
----
+### cURL
 
-## 🧪 Testing
-
-### Postman Collection
-Import the Postman collection from `docs/postman/ELEVARE.postman_collection.json`
-
-### Test Environment Variables
-```json
-{
-  "baseUrl": "http://localhost:5000/api",
-  "authToken": "{{token}}",
-  "userId": "{{userId}}"
-}
-```
-
-### Automated Tests
 ```bash
-# Run API tests
-cd backend
-npm test
+# Register
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Jane","email":"jane@example.com","password":"SecurePass1","age":22,"education":"undergraduate"}'
 
-# Run specific test suite
-npm test -- --grep "Authentication"
+# Login and save token
+TOKEN=$(curl -s -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"jane@example.com","password":"SecurePass1"}' | jq -r '.data.token')
+
+# Get profile
+curl http://localhost:5000/api/profile \
+  -H "Authorization: Bearer $TOKEN"
+
+# Send message
+curl -X POST http://localhost:5000/api/conversations/message \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"message":"I love solving complex problems"}'
 ```
-
----
-
-## 📚 Additional Resources
-
-### OpenAPI Specification
-- [Swagger UI](http://localhost:5000/api-docs) (when server is running)
-- [OpenAPI JSON](./openapi.json)
-
-### SDKs and Libraries
-- [JavaScript SDK](./sdks/javascript/)
-- [Python SDK](./sdks/python/)
-- [React Hooks](./sdks/react-hooks/)
-
-### Webhooks
-- [Webhook Documentation](./WEBHOOKS.md)
-- [Event Types](./EVENTS.md)
-
----
-
-**📞 Support**
-
-For API support and questions:
-- [GitHub Issues](https://github.com/Varadha9/ELEVARE/issues)
-- [API Discussion Forum](https://github.com/Varadha9/ELEVARE/discussions)
-- Email: api-support@elevare.com

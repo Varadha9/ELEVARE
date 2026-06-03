@@ -77,8 +77,7 @@ export const recommendationAPI = {
 
 // Health API — used to check if the backend is running
 export const healthAPI = {
-  // Uses absolute URL to bypass the /api base URL prefix
-  check: () => api.get('/health', { baseURL: 'http://localhost:5000' })
+  check: () => api.get('/health', { baseURL: import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000' })
 };
 
 export default api;

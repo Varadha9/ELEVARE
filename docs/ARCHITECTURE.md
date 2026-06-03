@@ -1,332 +1,316 @@
-# ELEVARE System Architecture
+# Architecture
+
+---
 
 ## Overview
-ELEVARE is a microservices-based AI platform for career discovery using longitudinal behavioral analysis.
 
-## Architecture Diagram
+ELEVARE uses a three-tier microservices architecture. The frontend talks to the Node.js backend over REST. The backend delegates all AI work to a separate Python FastAPI service. Both services share the same MongoDB database.
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         CLIENT LAYER                             │
-│                                                                   │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │              React Frontend (Port 3000)                   │  │
-│  │  - Chat Interface                                         │  │
-│  │  - Dashboard & Analytics                                  │  │
-│  │  - User Authentication                                    │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓ HTTP/REST
-┌─────────────────────────────────────────────────────────────────┐
-│                      APPLICATION LAYER                           │
-│                                                                   │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │         Node.js/Express API (Port 5000)                   │  │
-│  │  - Authentication (JWT)                                   │  │
-│  │  - Request Validation                                     │  │
-│  │  - Rate Limiting                                          │  │
-│  │  - Business Logic                                         │  │
-│  │  - API Gateway                                            │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓ HTTP
-┌─────────────────────────────────────────────────────────────────┐
-│                      AI PROCESSING LAYER                         │
-│                                                                   │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │         Python FastAPI Service (Port 8000)                │  │
-│  │                                                           │  │
-│  │  ┌────────────────┐  ┌──────────────────┐               │  │
-│  │  │ NLP Processor  │  │ Behavioral       │               │  │
-│  │  │ - Transformers │  │ Analyzer         │               │  │
-│  │  │ - NLTK         │  │ - Trait Updates  │               │  │
-│  │  │ - Emotion Det. │  │ - Personality    │               │  │
-│  │  └────────────────┘  └──────────────────┘               │  │
-│  │                                                           │  │
-│  │  ┌────────────────┐  ┌──────────────────┐               │  │
-│  │  │ Conversational │  │ Recommendation   │               │  │
-│  │  │ Agent          │  │ Engine           │               │  │
-│  │  │ - Questions    │  │ - ML Scoring     │               │  │
-│  │  │ - Context      │  │ - Ikigai Map     │               │  │
-│  │  └────────────────┘  └──────────────────┘               │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                         DATA LAYER                               │
-│                                                                   │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │              MongoDB (Port 27017)                         │  │
-│  │                                                           │  │
-│  │  Collections:                                            │  │
-│  │  - users                                                 │  │
-│  │  - userprofiles (traits, personality, ikigai)           │  │
-│  │  - conversations (messages, analysis)                   │  │
-│  │  - recommendations                                       │  │
-│  │  - careers (dataset)                                     │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────┐
+│   Frontend — React 18 + Vite          │
+│   Port 3000                           │
+│   Chat · Dashboard · Analytics        │
+└──────────────────┬────────────────────┘
+                   │ REST / JSON
+┌──────────────────▼────────────────────┐
+│   Backend API — Node.js + Express     │
+│   Port 5000                           │
+│   Auth · Validation · Rate Limiting   │
+│   Business Logic · API Gateway        │
+└──────────────────┬────────────────────┘
+                   │ HTTP
+┌──────────────────▼────────────────────┐
+│   AI Services — Python + FastAPI      │
+│   Port 8000                           │
+│   NLP · Behavioral Analysis           │
+│   Groq LLM · Recommendations         │
+└──────────────────┬────────────────────┘
+                   │
+┌──────────────────▼────────────────────┐
+│   MongoDB — Port 27017                │
+│   users · userprofiles                │
+│   conversations · recommendations     │
+└───────────────────────────────────────┘
 ```
 
-## Component Details
+---
 
-### 1. Frontend (React + Vite)
-**Technology:** React 18, Vite, TailwindCSS, Recharts
+## Frontend
 
-**Components:**
-- `Chat.jsx` - Real-time conversational interface
-- `Dashboard.jsx` - Analytics and visualizations
-- `Login/Register.jsx` - Authentication pages
-- `AuthContext.jsx` - Global state management
+**Stack:** React 18, Vite, TailwindCSS, Framer Motion, Recharts
 
-**Features:**
-- JWT-based authentication
-- Real-time chat interface
-- Interactive data visualizations
-- Responsive design
+**Pages (10):**
 
-### 2. Backend API (Node.js + Express)
-**Technology:** Express, Mongoose, JWT, Bcrypt
+| Page | Route | Description |
+|------|-------|-------------|
+| Home | `/` | Landing page |
+| Login | `/login` | Authentication |
+| Register | `/register` | Account creation |
+| Dashboard | `/dashboard` | Overview, traits, top careers |
+| Reflection | `/reflection` | AI chat interface |
+| Personality | `/personality` | Big Five radar charts |
+| Careers | `/careers` | Career recommendations |
+| Ikigai | `/ikigai` | Four-quadrant Ikigai analysis |
+| Progress | `/progress` | Trait trends, streaks, calendar |
+| Settings | `/settings` | Profile, password, theme, data export |
 
-**Structure:**
+**Key patterns:**
+- JWT stored in `localStorage`, attached to all requests via `api.js` Axios interceptor
+- `AuthContext` provides `user`, `token`, `login()`, `logout()` globally
+- Custom hooks (`useProfile`, `useConversations`) for data fetching with loading/error states
+- All pages have loading skeleton, empty state, and error boundary
+
+---
+
+## Backend API
+
+**Stack:** Node.js, Express, Mongoose, JWT, Bcrypt, Helmet
+
+**Security middleware stack (in order):**
+1. `helmet()` — security headers (CSP, HSTS, etc.)
+2. `cors()` — whitelist-based origin validation
+3. `express.json({ limit: '1mb' })` — body parser with size limit
+4. `mongoSanitize()` — strip `$` and `.` from inputs
+5. `globalLimiter` — 100 req / 15 min per IP
+6. `authLimiter` — 10 req / 15 min on login/register
+7. `verifyToken` — JWT validation on protected routes
+8. `express-validator` — field-level input validation
+
+**Routes:**
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/auth/register` | ❌ | Register user |
+| POST | `/api/auth/login` | ❌ | Login |
+| PUT | `/api/auth/change-password` | ✅ | Change password |
+| DELETE | `/api/auth/account` | ✅ | Delete account |
+| GET | `/api/profile` | ✅ | Get profile + traits |
+| PUT | `/api/profile` | ✅ | Update name/email |
+| GET | `/api/profile/export` | ✅ | Export all data |
+| POST | `/api/conversations/message` | ✅ | Send message, get AI reply |
+| GET | `/api/conversations/history` | ✅ | Get chat history |
+| GET | `/api/recommendations` | ✅ | Get career recommendations |
+| POST | `/api/recommendations/generate` | ✅ | Trigger recommendation generation |
+| GET | `/health` | ❌ | Service health check |
+
+**Fallback strategy:** If the AI service is unavailable, the backend uses a keyword-based NLP fallback and returns generic responses without failing the request.
+
+---
+
+## AI Services
+
+**Stack:** Python, FastAPI, NLTK, TextBlob, Groq API
+
+### NLP Processor
+
+Runs on every user message:
+
 ```
-backend/
-├── models/          # MongoDB schemas
-├── controllers/     # Business logic
-├── routes/          # API endpoints
-├── middleware/      # Auth, validation
-└── config/          # Database config
+Raw text
+  → lowercase + clean
+  → tokenize (NLTK punkt)
+  → remove stopwords
+  → keyword extraction
+  → sentiment score (TextBlob polarity: -1 to +1)
+  → emotion detection (keyword → emotion mapping)
+  → trait signal detection (keyword → trait mapping)
+  → personality signal detection (keyword → OCEAN mapping)
 ```
 
-**Key Features:**
-- RESTful API design
-- JWT authentication
-- Input validation
-- Rate limiting (100 req/15min)
-- Error handling
+### Behavioral Analyzer
 
-### 3. AI Services (Python + FastAPI)
-**Technology:** FastAPI, Transformers, Scikit-learn, NLTK
+Updates user profile using **Exponential Weighted Moving Average (EWMA)**:
 
-**Services:**
+```python
+# Trait update (scale 0–10)
+new_trait = old_trait + (detected_signal - old_trait) * learning_rate
+# learning_rate = 0.15
 
-**NLP Processor:**
-- Text preprocessing
-- Emotion detection (DistilRoBERTa)
-- Sentiment analysis
-- Keyword extraction
-- Trait extraction
+# Personality update (scale 0–1)
+new_score = old_score + (signal - old_score) * learning_rate
+```
 
-**Behavioral Analyzer:**
-- Trait evolution tracking
-- Personality modeling (Big Five)
-- Ikigai framework mapping
-- Longitudinal analysis
+This means recent conversations have more influence than older ones, allowing profiles to evolve naturally over time.
 
-**Conversational Agent:**
-- Context-aware responses
-- Reflective question generation
-- Conversation flow management
-- Empathetic communication
+**Ikigai alignment** is recalculated after every conversation based on top traits, interests, and personality scores:
+- `whatYouLove` → high openness + creativity + detected interests
+- `whatYouAreGoodAt` → top 3 behavioral traits
+- `whatTheWorldNeeds` → empathy + leadership + communication
+- `whatYouCanBePaidFor` → analytical + problem-solving + top career skills
 
-**Recommendation Engine:**
-- Hybrid scoring algorithm
-- Trait-career matching
-- Personality fit calculation
-- Ikigai alignment
-- Confidence scoring
+### Conversational Agent
 
-### 4. Database (MongoDB)
-**Collections Schema:**
+Builds a context-aware prompt for the Groq LLM:
 
-**users:**
-```javascript
+```
+System prompt (career coach persona)
+  + user's current trait profile
+  + last 5 conversation turns
+  + NLP analysis of current message
+  → Groq API (Llama 3.3 70B)
+  → empathetic, focused follow-up question
+```
+
+**Retry logic:** 3 attempts with exponential backoff. Falls back to a generic response if all attempts fail.
+
+### Recommendation Engine
+
+Scores each career using a weighted composite:
+
+```
+Confidence = (trait_match × 0.4) + (personality_fit × 0.3) + (ikigai_alignment × 0.3)
+```
+
+- **Trait match** — cosine similarity between user traits and career trait requirements
+- **Personality fit** — dot product of user OCEAN scores and career OCEAN profile
+- **Ikigai alignment** — overlap between user Ikigai keywords and career keywords
+
+Returns top 5 careers ranked by confidence score.
+
+---
+
+## Database
+
+**MongoDB Collections:**
+
+### `users`
+```js
 {
-  name, email, password (hashed),
-  age, education, currentStatus,
-  conversationStreak, lastActive
+  name: String,
+  email: String (unique),
+  password: String (bcrypt hash),
+  age: Number,
+  education: String,
+  createdAt: Date
 }
 ```
 
-**userprofiles:**
-```javascript
+### `userprofiles`
+```js
 {
-  userId,
-  personality: { openness, conscientiousness, extraversion, agreeableness, neuroticism },
-  behavioralTraits: { creativity, analyticalThinking, communication, ... },
-  ikigai: { loves[], goodAt[], worldNeeds[], paidFor[] },
-  interests[], traitHistory[]
+  userId: ObjectId (ref: users),
+  behavioralTraits: {
+    creativity, analyticalThinking, leadership,
+    teamwork, communication, problemSolving,
+    adaptability, empathy  // all 0–10
+  },
+  personality: {
+    openness, conscientiousness, extraversion,
+    agreeableness, neuroticism  // all 0–1
+  },
+  ikigai: {
+    whatYouLove: [String],
+    whatYouAreGoodAt: [String],
+    whatTheWorldNeeds: [String],
+    whatYouCanBePaidFor: [String]
+  },
+  conversationCount: Number,
+  profileCompleteness: Number,
+  updatedAt: Date
 }
 ```
 
-**conversations:**
-```javascript
+### `conversations`
+```js
 {
-  userId, sessionDate,
-  messages: [{ role, content, timestamp, analysis }]
+  userId: ObjectId,
+  userMessage: String,
+  aiResponse: String,
+  analysis: {
+    sentiment: Number,
+    emotions: Object,
+    keywords: [String],
+    detectedTraits: Object
+  },
+  timestamp: Date
 }
 ```
 
-**recommendations:**
-```javascript
+### `recommendations`
+```js
 {
-  userId, generatedAt,
-  recommendations: [{ careerTitle, confidenceScore, explanation, careerDetails, userFeedback }]
+  userId: ObjectId,
+  careerTitle: String,
+  confidenceScore: Number,
+  reasoning: String,
+  matchedTraits: [String],
+  requiredSkills: [String],
+  averageSalary: String,
+  growthRate: String,
+  createdAt: Date
 }
 ```
 
-**careers:**
-```javascript
-{
-  title, category, description,
-  requiredTraits, personalityFit,
-  skills[], education[], salary, growth,
-  ikigaiMapping
-}
+**Recommended indexes:**
+```js
+db.users.createIndex({ email: 1 }, { unique: true })
+db.userprofiles.createIndex({ userId: 1 }, { unique: true })
+db.conversations.createIndex({ userId: 1, timestamp: -1 })
+db.recommendations.createIndex({ userId: 1, createdAt: -1 })
 ```
+
+---
 
 ## Data Flow
 
-### Conversation Flow
+### Message Processing
+
 ```
-1. User sends message → Frontend
-2. Frontend → Backend API (POST /conversations/message)
-3. Backend → AI Service (POST /process)
-4. AI Service:
-   - NLP processing (emotion, sentiment, keywords)
-   - Trait extraction
-   - Behavioral analysis
-   - Profile update
-   - Response generation
-5. AI Service → Backend (response + analysis)
-6. Backend saves to MongoDB
-7. Backend → Frontend (AI response)
-8. Frontend displays message
+1.  User sends message → React frontend
+2.  Frontend → POST /api/conversations/message (with JWT)
+3.  Backend validates token and input
+4.  Backend → POST /process on AI service (message + history)
+5.  AI service:
+      a. NLP analysis (sentiment, emotions, traits)
+      b. Fetch user profile from MongoDB
+      c. Update traits with EWMA
+      d. Update personality
+      e. Recalculate Ikigai
+      f. Save updates to MongoDB
+      g. Call Groq LLM → generate response
+6.  AI service → Backend (response + analysis + updated traits)
+7.  Backend saves conversation to MongoDB
+8.  Backend → Frontend (AI message + analysis data)
+9.  Frontend displays message and updates trait visualizations
 ```
 
 ### Recommendation Flow
-```
-1. User requests recommendations → Frontend
-2. Frontend → Backend (POST /recommendations/generate)
-3. Backend → AI Service (POST /recommend)
-4. AI Service:
-   - Fetch user profile
-   - Fetch career database
-   - Calculate trait match
-   - Calculate personality fit
-   - Calculate Ikigai alignment
-   - Generate explanations
-   - Rank careers
-5. AI Service → Backend (recommendations)
-6. Backend saves to MongoDB
-7. Backend → Frontend (recommendations)
-8. Frontend displays in dashboard
-```
-
-## AI Pipeline Details
-
-### NLP Processing Pipeline
-```
-Input Text
-    ↓
-Preprocessing (lowercase, clean)
-    ↓
-Tokenization (NLTK)
-    ↓
-Emotion Detection (Transformer)
-    ↓
-Sentiment Analysis (TextBlob)
-    ↓
-Keyword Extraction (stopword removal)
-    ↓
-Trait Extraction (keyword matching)
-    ↓
-Output: {emotions, sentiment, keywords, traits}
-```
-
-### Behavioral Update Algorithm
-```python
-# Exponential Moving Average
-learning_rate = 0.15
-new_value = current_value + (detected_signal * learning_rate)
-new_value = clamp(new_value, 0, 100)
-```
-
-### Recommendation Scoring
-```python
-confidence = (
-    trait_match_score * 0.4 +
-    personality_fit_score * 0.3 +
-    ikigai_alignment_score * 0.3
-)
-```
-
-## Security Features
-
-1. **Authentication:**
-   - JWT tokens (7-day expiry)
-   - Bcrypt password hashing (12 rounds)
-   - Token validation on protected routes
-
-2. **Input Validation:**
-   - Express-validator for request validation
-   - Pydantic models in FastAPI
-   - SQL injection prevention (NoSQL)
-
-3. **Rate Limiting:**
-   - 100 requests per 15 minutes
-   - IP-based throttling
-
-4. **CORS:**
-   - Configured for frontend origin
-   - Credentials support
-
-## Scalability Considerations
-
-1. **Horizontal Scaling:**
-   - Stateless API design
-   - JWT for distributed auth
-   - MongoDB replica sets
-
-2. **Microservices:**
-   - Independent AI service
-   - Can scale separately
-   - Language-specific optimization
-
-3. **Caching:**
-   - Career database caching
-   - Model caching in AI service
-
-4. **Database Indexing:**
-   - userId indexes
-   - Compound indexes for queries
-
-## Deployment Architecture
 
 ```
-Production Environment:
-- Frontend: Vercel/Netlify
-- Backend: AWS EC2/Heroku
-- AI Service: AWS EC2 (GPU optional)
-- Database: MongoDB Atlas
-- Load Balancer: AWS ALB
+1.  User clicks "Generate Recommendations"
+2.  Frontend → POST /api/recommendations/generate
+3.  Backend → POST /recommend on AI service
+4.  AI service:
+      a. Fetch user profile
+      b. Score each career (trait + personality + ikigai)
+      c. Rank top 5 careers
+      d. Generate explanations
+5.  AI service → Backend (ranked recommendations)
+6.  Backend → Frontend (recommendations with scores)
 ```
 
-## Monitoring & Logging
+---
 
-- API request logging
-- Error tracking
-- Performance metrics
-- User analytics
-- Model performance tracking
+## Security Model
 
-## Future Enhancements
+| Layer | Controls |
+|-------|---------|
+| Network | CORS whitelist, HTTPS in production |
+| API | Rate limiting (global + per endpoint), Helmet headers |
+| Input | express-validator + mongoSanitize |
+| Auth | JWT (HS256, 7-day expiry), bcrypt (12 rounds) |
+| Data | MongoDB — no raw query exposure, sanitized inputs |
 
-1. Real-time WebSocket chat
-2. Advanced ML models (BERT, GPT)
-3. Multi-language support
-4. Mobile applications
-5. Career path visualization
-6. Mentor matching
-7. Job market integration
-8. A/B testing framework
+---
+
+## Scalability Notes
+
+The architecture is stateless at the API layer — JWT tokens carry auth state, so multiple backend instances can run behind a load balancer without session sharing.
+
+The AI service is the most resource-intensive component (LLM calls). It can be scaled independently of the backend.
+
+For higher traffic:
+- Add Redis for caching profile data and recommendations
+- Use MongoDB Atlas auto-scaling
+- Add a queue (e.g. Bull/BullMQ) for LLM processing to avoid request timeouts

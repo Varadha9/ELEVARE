@@ -1,10 +1,19 @@
-# FastAPI — modern Python web framework for building APIs
 from fastapi import FastAPI, HTTPException
-# Pydantic — data validation using Python type hints
 from pydantic import BaseModel
 from typing import List, Dict, Optional
-# Uvicorn — ASGI server that runs the FastAPI app
 import uvicorn
+import os
+import logging
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, os.getenv('LOG_LEVEL', 'INFO')),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Import AI service modules
 from services.nlp_processor import NLPProcessor
@@ -26,8 +35,29 @@ def parse_user_id(user_id: str):
     except (InvalidId, Exception):
         return user_id
 
-# Initialize FastAPI app with metadata
-app = FastAPI(title="ELEVARE AI Services", version="1.0.0")
+app = FastAPI(
+    title="ELEVARE AI Services",
+    version="1.0.0",
+    docs_url="/docs" if os.getenv('ENVIRONMENT') != 'production' else None,
+    redoc_url="/redoc" if os.getenv('ENVIRONMENT') != 'production' else None
+)
+
+# Startup validation
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Starting ELEVARE AI Services...")
+    
+    # Validate Groq API key
+    groq_key = os.getenv('GROQ_API_KEY')
+    if not groq_key or groq_key == 'your_groq_api_key_here':
+        logger.warning("⚠️  GROQ_API_KEY not set. AI responses will use fallback mode.")
+    else:
+        logger.info("✅ GROQ_API_KEY configured")
+    
+    # Validate MongoDB connection
+    mongo_uri = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/elevare')
+    logger.info(f"📊 MongoDB URI configured")
+    logger.info("✅ ELEVARE AI Services ready")
 
 # Initialize all AI service components once at startup
 # These are reused across all requests for efficiency
@@ -181,10 +211,16 @@ async def process_feedback(request: FeedbackRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# /health — health check endpoint used by monitoring tools
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "services": ["nlp", "behavioral", "recommendation"]}
+    health_status = {
+        "status": "healthy",
+        "services": ["nlp", "behavioral", "recommendation"],
+        "groq_api_configured": bool(os.getenv('GROQ_API_KEY') and os.getenv('GROQ_API_KEY') != 'your_groq_api_key_here'),
+        "mongodb_configured": bool(os.getenv('MONGODB_URI')),
+        "environment": os.getenv('ENVIRONMENT', 'development')
+    }
+    return health_status
 
 # Entry point — starts the Uvicorn server when running this file directly
 if __name__ == "__main__":

@@ -1,122 +1,135 @@
 # Contributing to ELEVARE
 
-Thank you for your interest in contributing! This document covers everything you need to get started.
+Thanks for your interest in contributing! Here's everything you need to get started.
 
 ---
 
-## 🎯 Ways to Contribute
+## Ways to Contribute
 
-| Type | Description |
-|------|-------------|
-| 🐛 **Bug Reports** | Find and report issues via GitHub Issues |
-| ✨ **Feature Requests** | Suggest new functionality |
-| 📝 **Documentation** | Improve guides and docs |
-| 🔧 **Code** | Bug fixes, features, optimizations |
-| 🧪 **Testing** | Add or improve test coverage |
-| 🎨 **UI/UX** | Design and accessibility improvements |
+- **Bug Reports** — Find and report issues via [GitHub Issues](https://github.com/Varadha9/ELEVARE/issues)
+- **Feature Requests** — Suggest new functionality
+- **Code** — Bug fixes, features, optimizations
+- **Documentation** — Improve guides and docs
+- **Testing** — Add or improve test coverage
+- **UI/UX** — Design and accessibility improvements
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ```bash
-# 1. Fork & clone
+# 1. Fork and clone
 git clone https://github.com/YOUR_USERNAME/ELEVARE.git
 cd ELEVARE
 
-# 2. Setup
-.\setup.bat   # Windows
+# 2. Set up environment
+cp .env.template .env
+# Fill in MONGODB_URI, JWT_SECRET, GROQ_API_KEY
 
-# 3. Create a branch
-git checkout -b feature/your-feature-name
+# 3. Install dependencies
+cd backend && npm install
+cd ../frontend && npm install
+cd ../ai-services && pip install -r requirements.txt
+
+# 4. Create a branch
+git checkout -b feature/your-feature
 # or
-git checkout -b fix/what-you-are-fixing
+git checkout -b fix/issue-description
 
-# 4. Make changes, then commit
+# 5. Make changes, then test
+cd backend && npm test
+cd ../ai-services && pytest
+
+# 6. Commit and push
 git commit -m "feat: add your feature"
+git push origin feature/your-feature
 
-# 5. Push and open a PR against main
-git push origin feature/your-feature-name
+# 7. Open a Pull Request against main
 ```
 
 ---
 
-## 🌿 Branch Naming
+## Branch Naming
 
 | Prefix | Use for | Example |
 |--------|---------|---------|
 | `feature/` | New features | `feature/websocket-chat` |
 | `fix/` | Bug fixes | `fix/chat-message-order` |
-| `fix/` | Service-specific fixes | `fix/ai-services-ikigai` |
 | `docs/` | Documentation only | `docs/update-api-reference` |
 | `refactor/` | Code cleanup | `refactor/profile-controller` |
+| `test/` | Tests only | `test/backend-api` |
 
 ---
 
-## 📋 Commit Message Format
+## Commit Message Format
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-type: short description
-
-Optional longer body explaining why, not what.
+type: short description in present tense
 ```
 
 **Types:**
-- `feat` — new feature
-- `fix` — bug fix
-- `docs` — documentation only
-- `refactor` — code change that doesn't fix a bug or add a feature
-- `style` — formatting, missing semicolons, etc.
-- `test` — adding or updating tests
-- `chore` — maintenance (deps, config, cleanup)
+
+| Type | When to use |
+|------|-------------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `refactor` | Code change, no new feature or fix |
+| `test` | Adding or updating tests |
+| `chore` | Maintenance, deps, config |
 
 **Examples:**
+
 ```bash
 feat: add streak calculation to profile endpoint
 fix: correct chat message order in Reflection page
-fix: make Ikigai page work end-to-end
-docs: update README project structure
-chore: remove dead files and dev clutter
+fix: save ikigai data to MongoDB after each conversation
+docs: update API reference with new endpoints
+test: add auth integration tests
+chore: bump dependencies to latest versions
 ```
 
 ---
 
-## 📋 Code Style
+## Code Style
 
-**JavaScript/Node.js:**
-- ES6+ features
+**JavaScript / Node.js**
+- ES6+ (arrow functions, destructuring, async/await)
 - Meaningful variable names
-- No `console.log` in production code
+- No `console.log` in production code — use the logger
+- Handle all promise rejections
 
-**Python:**
+**Python**
 - Follow PEP 8
-- Type hints where appropriate
-- Docstrings for public functions
+- Type hints on function signatures
+- Docstrings for public functions and classes
 
-**React:**
-- Functional components with hooks
-- Dark mode support on all new components (`dark:` Tailwind classes)
-- Loading + empty states on all data-fetching pages
+**React**
+- Functional components with hooks only
+- Dark mode support on all new UI components (`dark:` Tailwind classes)
+- Loading state + empty state on all data-fetching pages
+- Use existing UI components from `src/components/ui/`
 
 ---
 
-## 🔍 Pull Request Checklist
+## Pull Request Checklist
 
 Before opening a PR:
 
 - [ ] Branch is up to date with `main`
-- [ ] Code works locally end-to-end
+- [ ] All tests pass (`npm test` + `pytest`)
 - [ ] No `console.log` debug statements left in
-- [ ] Dark mode tested if UI changes
+- [ ] Dark mode tested if UI changes were made
+- [ ] New environment variables documented in `.env.template`
 - [ ] PR description explains what changed and why
 
 ---
 
-## 🐛 Bug Report Template
+## Bug Report Template
 
-When opening an issue:
+When opening an issue, include:
 
 ```
 **What happened:**
@@ -127,7 +140,7 @@ Brief description of the bug.
 2. Click ...
 3. See error
 
-**Expected behaviour:**
+**Expected behavior:**
 What should have happened.
 
 **Environment:**
@@ -142,7 +155,7 @@ Paste relevant output here.
 
 ---
 
-## ✨ Feature Request Template
+## Feature Request Template
 
 ```
 **Problem this solves:**
@@ -157,19 +170,37 @@ Any other approaches you thought of?
 
 ---
 
-## 🔐 Security Issues
+## Project Structure Overview
 
-**Do not** open public issues for security vulnerabilities.  
-Instead, open a [GitHub Issue](https://github.com/Varadha9/ELEVARE/issues) marked as **confidential**, or contact the maintainer directly via GitHub.
+```
+backend/        Node.js Express API
+frontend/       React application
+ai-services/    Python FastAPI AI microservice
+docs/           Documentation
+```
+
+Key files to understand first:
+- `backend/server.js` — all routes and middleware
+- `ai-services/main.py` — AI service endpoints
+- `ai-services/services/` — NLP, behavioral analysis, recommendations
+- `frontend/src/pages/` — all application pages
 
 ---
 
-## 📞 Contact
+## Security Issues
 
-- **Maintainer:** Varadha — [GitHub](https://github.com/Varadha9)
-- **Issues:** [GitHub Issues](https://github.com/Varadha9/ELEVARE/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/Varadha9/ELEVARE/discussions)
+**Do not** open public issues for security vulnerabilities.
+
+Instead, contact the maintainer directly via [GitHub](https://github.com/Varadha9) or open a confidential issue.
 
 ---
 
-**Thank you for contributing to ELEVARE! 🚀**
+## Questions?
+
+- [GitHub Issues](https://github.com/Varadha9/ELEVARE/issues)
+- [GitHub Discussions](https://github.com/Varadha9/ELEVARE/discussions)
+- Maintainer: [Varadha](https://github.com/Varadha9)
+
+---
+
+**Thank you for contributing to ELEVARE!**
