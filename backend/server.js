@@ -328,6 +328,8 @@ app.post('/api/auth/register',
   ],
   async (req, res) => {
   if (!handleValidation(req, res)) return;
+  try {
+    const { name, email, password, age, education } = req.body;
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -416,6 +418,8 @@ app.post('/api/auth/login',
   ],
   async (req, res) => {
   if (!handleValidation(req, res)) return;
+  try {
+    const { email, password } = req.body;
 
     let user;
 
