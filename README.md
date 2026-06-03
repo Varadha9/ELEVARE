@@ -93,22 +93,33 @@ You talk to the AI  →  AI learns your patterns  →  You get personalized care
 
 ## Quick Start
 
-### Prerequisites
-
-| Software | Version |
-|----------|---------|
-| Node.js | 18+ |
-| Python | 3.9+ |
-| MongoDB | 6+ |
-| Git | Latest |
-
-### 1. Clone & Configure
+### One-Command Start (Recommended)
 
 ```bash
 git clone https://github.com/Varadha9/ELEVARE.git
 cd ELEVARE
+cp .env.template .env   # fill in GROQ_API_KEY
+./start.sh
+```
 
-# Copy environment template
+Then open http://localhost:3000
+
+### Manual Setup
+
+#### Prerequisites
+
+| Software | Version |
+|----------|---------|
+| Node.js | 18+ |
+| Python | 3.9+ (3.13 supported) |
+| MongoDB | 6+ |
+| Git | Latest |
+
+#### 1. Clone & Configure
+
+```bash
+git clone https://github.com/Varadha9/ELEVARE.git
+cd ELEVARE
 cp .env.template .env
 ```
 
@@ -120,16 +131,16 @@ JWT_SECRET=your_strong_secret_here        # openssl rand -base64 32
 GROQ_API_KEY=your_groq_api_key_here       # https://console.groq.com/keys
 ```
 
-### 2. Backend
+#### 2. Backend
 
 ```bash
 cd backend
 npm install
 cp .env.example .env   # fill in your values
-npm start
+node server.js
 ```
 
-### 3. AI Services
+#### 3. AI Services
 
 ```bash
 cd ai-services
@@ -144,7 +155,7 @@ cp .env.example .env            # add GROQ_API_KEY
 python main.py
 ```
 
-### 4. Frontend
+#### 4. Frontend
 
 ```bash
 cd frontend
@@ -152,20 +163,13 @@ npm install
 npm run dev
 ```
 
-### 5. Open in Browser
+#### 5. Open in Browser
 
 | Service | URL |
 |---------|-----|
 | Frontend | http://localhost:3000 |
 | Backend API | http://localhost:5000 |
 | AI Service | http://localhost:8000 |
-
-### Docker (Alternative)
-
-```bash
-cp .env.template .env    # fill in values
-docker-compose up -d
-```
 
 ---
 
@@ -204,6 +208,7 @@ ELEVARE/
 │   └── main.py                 # FastAPI server
 │
 ├── docker-compose.yml
+├── start.sh                    # One-command startup script
 ├── .env.template               # All environment variables
 └── docs/                       # Full documentation
 ```

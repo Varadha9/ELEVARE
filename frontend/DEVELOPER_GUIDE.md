@@ -3,12 +3,19 @@
 ## 🚀 Quick Start
 
 ```bash
+# From project root — starts all services
+./start.sh
+```
+
+Or manually:
+
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Access at: http://localhost:3000
+Access at: http://localhost:3000 (may use 3001/3002 if port is busy)
 
 ---
 

@@ -103,7 +103,7 @@ npm install
 npm run dev
 ```
 
-Access at: http://localhost:3000
+Access at: http://localhost:3000 (may use 3001/3002 if port is busy)
 
 ## 🏗️ Build for Production
 
