@@ -137,13 +137,14 @@ export function Home() {
             <div className="flex flex-col sm:flex-row gap-3">
               <Link to="/register">
                 <Button size="lg" className="w-full sm:w-auto">
-                  Start Free <ArrowRight className="w-4 h-4" />
+                  Start Free Trial <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
               <Link to="/login">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto">Sign In</Button>
               </Link>
             </div>
+            <p className="text-sm text-gray-500 mt-3">7-day free trial · No credit card required</p>
             {/* Social proof */}
             <div className="flex items-center gap-3 mt-8">
               <div className="flex -space-x-2">
@@ -238,7 +239,7 @@ export function Home() {
             </div>
             <Link to="/register">
               <Button className="w-full mt-8 bg-white text-primary hover:bg-gray-50">
-                Create Free Account <ArrowRight className="w-4 h-4" />
+                Start Free Trial <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
           </motion.div>
@@ -250,10 +251,11 @@ export function Home() {
         <div className="max-w-3xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }}>
             <h2 className="text-4xl font-bold text-white mb-4">Ready to Find Your Path?</h2>
-            <p className="text-white/85 mb-8">Join students who've discovered their perfect career with ELEVARE</p>
+            <p className="text-white/85 mb-2">Join students who've discovered their perfect career with ELEVARE</p>
+            <p className="text-white/60 text-sm mb-8">7-day free trial · Then ₹499/month · Cancel anytime</p>
             <Link to="/register">
               <Button size="lg" className="bg-white text-primary hover:bg-gray-50">
-                Start Your Journey <ArrowRight className="w-4 h-4" />
+                Start Free Trial <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
           </motion.div>

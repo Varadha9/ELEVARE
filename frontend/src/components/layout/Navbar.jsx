@@ -22,8 +22,12 @@ export function Navbar({ title = 'Dashboard' }) {
 
   // Derive display name and initials from the user object
   // Handles both nested (user.user.name) and flat (user.name) structures
-  const userName = user?.user?.name || user?.name || 'User';
+  const userData = user;
+  const userName = user?.name || 'User';
   const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const isAdmin = user?.role === 'admin';
+  const isTrial = user?.subscriptionStatus === 'trial';
+  const trialDays = user?.trialDaysLeft ?? 7;
 
   // Close dropdowns when clicking outside them (mousedown fires before blur)
   useEffect(() => {
@@ -119,7 +123,19 @@ export function Navbar({ title = 'Dashboard' }) {
     // sticky top-0 — navbar stays visible while scrolling; z-40 keeps it above page content
     <nav className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 flex items-center justify-between sticky top-0 z-40 shadow-sm">
       {/* Page title — passed from DashboardLayout */}
-      <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 pl-10 lg:pl-0">{title}</h1>
+      <div className="flex items-center gap-3 pl-10 lg:pl-0">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{title}</h1>
+        {isAdmin && (
+          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold rounded-full">
+            Admin
+          </span>
+        )}
+        {!isAdmin && isTrial && trialDays > 0 && (
+          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-xs font-semibold rounded-full">
+            Trial · {trialDays}d left
+          </span>
+        )}
+      </div>
 
       <div className="flex items-center gap-2">
         {/* Notification bell with unread count badge */}
@@ -191,7 +207,10 @@ export function Navbar({ title = 'Dashboard' }) {
               {/* User info header */}
               <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-700 mb-1">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{userName}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.user?.email || user?.email || ''}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{userData?.email || ''}</p>
+                {!isAdmin && isTrial && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">{trialDays} trial days left</p>
+                )}
               </div>
               {/* Profile and Settings both navigate to /settings */}
               <button onClick={() => { navigate('/settings'); setShowDropdown(false); }}

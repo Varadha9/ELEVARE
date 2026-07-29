@@ -19,8 +19,9 @@ export function Login() {
     setError('');
     setLoading(true);
     try {
-      await login({ email, password });
-      navigate('/dashboard');
+      const result = await login({ email, password });
+      const role = result?.data?.user?.role || 'user';
+      navigate(role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
       setError(
         err.response?.data?.error?.message ||

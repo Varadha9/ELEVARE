@@ -24,12 +24,26 @@ import { Ikigai }      from './pages/Ikigai';
 import { Progress }    from './pages/ProgressTracking';
 import { Settings }    from './pages/Settings';
 import { NotFound }    from './pages/NotFound';
+import { SubscriptionWall } from './pages/SubscriptionWall';
+import { AdminDashboard }   from './pages/AdminDashboard';
+
+// TrialBanner — shows days remaining for trial users
+function TrialBanner() {
+  const { user } = useAuth();
+  if (!user || user.role === 'admin' || user.subscriptionStatus !== 'trial') return null;
+  const days = user.trialDaysLeft ?? 7;
+  if (days <= 0) return null;
+  return (
+    <div className="bg-indigo-600 text-white text-center text-sm py-2 px-4">
+      🎉 Free trial: <strong>{days} day{days !== 1 ? 's' : ''}</strong> remaining —{' '}
+      <button onClick={() => window.location.href = '/subscribe'} className="underline font-semibold">Subscribe now</button>
+    </div>
+  );
+}
 
 // ProtectedRoute — redirects unauthenticated users to /login
-// Wraps all pages that require a logged-in user
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
-  // replace prevents the login page from being added to browser history
   return user ? children : <Navigate to="/login" replace />;
 }
 
@@ -42,12 +56,12 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       {/* key={location.pathname} forces re-mount on route change, triggering animations */}
       <Routes location={location} key={location.pathname}>
-        {/* Public routes — accessible without login */}
         <Route path="/"         element={<ErrorBoundary><Home /></ErrorBoundary>} />
         <Route path="/login"    element={<ErrorBoundary><Login /></ErrorBoundary>} />
         <Route path="/register" element={<ErrorBoundary><Register /></ErrorBoundary>} />
+        <Route path="/subscribe" element={<ErrorBoundary><SubscriptionWall /></ErrorBoundary>} />
+        <Route path="/admin"    element={<ProtectedRoute><ErrorBoundary><AdminDashboard /></ErrorBoundary></ProtectedRoute>} />
 
-        {/* Protected routes — redirect to /login if not authenticated */}
         <Route path="/dashboard"   element={<ProtectedRoute><ErrorBoundary><Dashboard /></ErrorBoundary></ProtectedRoute>} />
         <Route path="/reflection"  element={<ProtectedRoute><ErrorBoundary><Reflection /></ErrorBoundary></ProtectedRoute>} />
         <Route path="/personality" element={<ProtectedRoute><ErrorBoundary><Personality /></ErrorBoundary></ProtectedRoute>} />
@@ -55,8 +69,6 @@ function AnimatedRoutes() {
         <Route path="/ikigai"      element={<ProtectedRoute><ErrorBoundary><Ikigai /></ErrorBoundary></ProtectedRoute>} />
         <Route path="/progress"    element={<ProtectedRoute><ErrorBoundary><Progress /></ErrorBoundary></ProtectedRoute>} />
         <Route path="/settings"    element={<ProtectedRoute><ErrorBoundary><Settings /></ErrorBoundary></ProtectedRoute>} />
-
-        {/* Catch-all — shows 404 page for any unknown route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
@@ -79,7 +91,12 @@ function AppContent() {
     return <Loading fullScreen message="Starting ELEVARE..." />;
   }
 
-  return <AnimatedRoutes />;
+  return (
+    <>
+      <TrialBanner />
+      <AnimatedRoutes />
+    </>
+  );
 }
 
 // App — root component that wraps everything with global providers
