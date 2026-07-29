@@ -31,6 +31,9 @@ if (!USE_MEMORY_DB) {
       password: { type: String, required: true },
       age: { type: Number, required: true },
       education: { type: String, required: true },
+      role: { type: String, enum: ['user', 'admin'], default: 'user' },
+      trialStartDate: { type: Date, default: Date.now },
+      subscriptionStatus: { type: String, enum: ['trial', 'active', 'expired'], default: 'trial' },
       createdAt: { type: Date, default: Date.now }
     });
 
@@ -85,6 +88,15 @@ if (!USE_MEMORY_DB) {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/elevare');
     console.log('✅ MongoDB connected successfully');
+
+    // Seed admin user if not exists
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@elevare.com';
+    const adminExists = await User.findOne({ email: adminEmail });
+    if (!adminExists) {
+      const hashed = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Admin@1234', 12);
+      await User.create({ name: 'Admin', email: adminEmail, password: hashed, age: 30, education: 'other', role: 'admin', subscriptionStatus: 'active' });
+      console.log(`✅ Admin user created: ${adminEmail}`);
+    }
     
   } catch (error) {
     console.log('⚠️  MongoDB connection failed, falling back to in-memory database');
@@ -273,6 +285,30 @@ const handleValidation = (req, res) => {
   return true;
 };
 
+// Trial check middleware — blocks expired trial users (admins always pass)
+const checkSubscription = (req, res, next) => {
+  const u = req.user;
+  if (!u) return next();
+  if (u.role === 'admin' || u.subscriptionStatus === 'active') return next();
+  if (u.subscriptionStatus === 'expired') {
+    return res.status(403).json({ success: false, error: { message: 'Trial expired. Please subscribe to continue.', code: 'TRIAL_EXPIRED' } });
+  }
+  // trial — check 7 days
+  const trialEnd = new Date(u.trialStartDate).getTime() + 7 * 24 * 60 * 60 * 1000;
+  if (Date.now() > trialEnd) {
+    return res.status(403).json({ success: false, error: { message: 'Trial expired. Please subscribe to continue.', code: 'TRIAL_EXPIRED' } });
+  }
+  next();
+};
+
+// Admin-only middleware
+const requireAdmin = (req, res, next) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ success: false, error: { message: 'Admin access required.' } });
+  }
+  next();
+};
+
 // JWT middleware
 const verifyToken = (req, res, next) => {
   try {
@@ -285,6 +321,22 @@ const verifyToken = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev_secret');
+    // Attach fresh subscription info from DB if available
+    if (!USE_MEMORY_DB && User) {
+      const dbUser = await User.findById(decoded.userId).select('role trialStartDate subscriptionStatus').lean();
+      if (dbUser) {
+        decoded.role = dbUser.role;
+        decoded.trialStartDate = dbUser.trialStartDate;
+        decoded.subscriptionStatus = dbUser.subscriptionStatus;
+      }
+    } else if (USE_MEMORY_DB && memoryDB) {
+      const dbUser = await memoryDB.findUserById(decoded.userId);
+      if (dbUser) {
+        decoded.role = dbUser.role || 'user';
+        decoded.trialStartDate = dbUser.trialStartDate || dbUser.createdAt;
+        decoded.subscriptionStatus = dbUser.subscriptionStatus || 'trial';
+      }
+    }
     req.user = decoded;
     next();
   } catch (error) {
@@ -392,12 +444,9 @@ app.post('/api/auth/register',
       message: 'User registered successfully',
       data: {
         user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          age: user.age,
-          education: user.education,
-          createdAt: user.createdAt
+          id: user._id, name: user.name, email: user.email, age: user.age,
+          education: user.education, createdAt: user.createdAt,
+          role: user.role || 'user', subscriptionStatus: user.subscriptionStatus || 'trial', trialDaysLeft: 7
         },
         token
       }
@@ -452,17 +501,16 @@ app.post('/api/auth/login',
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
+    const trialEndLogin = new Date(user.trialStartDate || user.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000;
+    const trialDaysLeftLogin = (user.subscriptionStatus || 'trial') === 'trial' ? Math.max(0, Math.ceil((trialEndLogin - Date.now()) / 86400000)) : null;
     res.json({
       success: true,
       message: 'Login successful',
       data: {
         user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          age: user.age,
-          education: user.education,
-          createdAt: user.createdAt
+          id: user._id, name: user.name, email: user.email, age: user.age,
+          education: user.education, createdAt: user.createdAt,
+          role: user.role || 'user', subscriptionStatus: user.subscriptionStatus || 'trial', trialDaysLeft: trialDaysLeftLogin
         },
         token
       }
@@ -505,10 +553,15 @@ app.get('/api/profile', verifyToken, async (req, res) => {
     const _profile = profile || createInitialProfile(req.user.userId);
     _profile.streak = calcStreak(_convs);
 
+    // Compute trial info
+    const trialEnd = new Date(user.trialStartDate || user.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000;
+    const trialDaysLeft = (user.subscriptionStatus || 'trial') === 'trial' ? Math.max(0, Math.ceil((trialEnd - Date.now()) / 86400000)) : null;
+
     res.json({
       success: true,
       data: {
-        user: { id: user._id, name: user.name, email: user.email, age: user.age, education: user.education, createdAt: user.createdAt },
+        user: { id: user._id, name: user.name, email: user.email, age: user.age, education: user.education, createdAt: user.createdAt,
+          role: user.role || 'user', subscriptionStatus: user.subscriptionStatus || 'trial', trialDaysLeft },
         profile: _profile
       }
     });
@@ -518,9 +571,74 @@ app.get('/api/profile', verifyToken, async (req, res) => {
   }
 });
 
+// Admin Routes
+app.get('/api/admin/users', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    let users;
+    if (USE_MEMORY_DB) {
+      users = [...memoryDB.users.values()].map(u => ({ ...u, password: undefined }));
+    } else {
+      users = await User.find({}).select('-password').lean();
+      // Attach conversation count
+      for (const u of users) {
+        u.conversationCount = await Conversation.countDocuments({ userId: u._id });
+        const trialEnd = new Date(u.trialStartDate).getTime() + 7 * 24 * 60 * 60 * 1000;
+        u.trialDaysLeft = u.subscriptionStatus === 'trial' ? Math.max(0, Math.ceil((trialEnd - Date.now()) / 86400000)) : null;
+      }
+    }
+    res.json({ success: true, data: users });
+  } catch (e) {
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+  }
+});
+
+app.get('/api/admin/stats', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    if (USE_MEMORY_DB) {
+      return res.json({ success: true, data: {
+        totalUsers: memoryDB.users.size,
+        totalConversations: [...memoryDB.conversations.values()].reduce((a, c) => a + c.length, 0),
+        trialUsers: [...memoryDB.users.values()].filter(u => u.subscriptionStatus === 'trial').length,
+        activeUsers: [...memoryDB.users.values()].filter(u => u.subscriptionStatus === 'active').length,
+        expiredUsers: [...memoryDB.users.values()].filter(u => u.subscriptionStatus === 'expired').length,
+      }});
+    }
+    const [totalUsers, totalConversations, trialUsers, activeUsers, expiredUsers] = await Promise.all([
+      User.countDocuments({ role: 'user' }),
+      Conversation.countDocuments(),
+      User.countDocuments({ subscriptionStatus: 'trial' }),
+      User.countDocuments({ subscriptionStatus: 'active' }),
+      User.countDocuments({ subscriptionStatus: 'expired' }),
+    ]);
+    res.json({ success: true, data: { totalUsers, totalConversations, trialUsers, activeUsers, expiredUsers } });
+  } catch (e) {
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+  }
+});
+
+app.put('/api/admin/users/:id/subscription', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const { subscriptionStatus } = req.body;
+    if (!['trial', 'active', 'expired'].includes(subscriptionStatus))
+      return res.status(400).json({ success: false, error: { message: 'Invalid status' } });
+    if (USE_MEMORY_DB) {
+      const u = await memoryDB.findUserById(req.params.id);
+      if (!u) return res.status(404).json({ success: false, error: { message: 'User not found' } });
+      u.subscriptionStatus = subscriptionStatus;
+      memoryDB.users.set(req.params.id, u);
+    } else {
+      await User.findByIdAndUpdate(req.params.id, { subscriptionStatus });
+    }
+    res.json({ success: true, message: 'Subscription updated' });
+  } catch (e) {
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+  }
+});
+
 // Conversation Routes
 app.post('/api/conversations/message',
   verifyToken,
+  checkSubscription,
   [body('message').trim().isLength({ min: 1, max: 2000 }).withMessage('Message must be 1-2000 characters')],
   async (req, res) => {
   if (!handleValidation(req, res)) return;
@@ -772,7 +890,7 @@ app.get('/api/conversations/history', verifyToken, async (req, res) => {
 });
 
 // Recommendations Routes
-app.get('/api/recommendations', verifyToken, async (req, res) => {
+app.get('/api/recommendations', verifyToken, checkSubscription, async (req, res) => {
   try {
     let profile;
     if (USE_MEMORY_DB) {
@@ -846,7 +964,7 @@ app.get('/api/recommendations', verifyToken, async (req, res) => {
   }
 });
 
-app.post('/api/recommendations/generate', verifyToken, async (req, res) => {
+app.post('/api/recommendations/generate', verifyToken, checkSubscription, async (req, res) => {
   try {
     let profile;
 

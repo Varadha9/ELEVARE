@@ -24,18 +24,18 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor — centralized error handling for all API responses
+  // Response interceptor — centralized error handling for all API responses
 api.interceptors.response.use(
-  (response) => response, // Pass successful responses through unchanged
+  (response) => response,
   (error) => {
     console.error('API Error:', error.response?.data || error.message);
-    
-    // If the server returns 401 (token expired/invalid), clear local storage and redirect to login
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
-    
+    if (error.response?.status === 403 && error.response?.data?.error?.code === 'TRIAL_EXPIRED') {
+      window.location.href = '/subscribe';
+    }
     return Promise.reject(error);
   }
 );
@@ -73,6 +73,13 @@ export const recommendationAPI = {
   generate:          ()     => api.post('/recommendations/generate'),
   getRecommendations:()     => api.get('/recommendations'),
   submitFeedback:    (data) => api.post('/recommendations/feedback', data)
+};
+
+// Admin API
+export const adminAPI = {
+  getStats:              ()           => api.get('/admin/stats'),
+  getUsers:              ()           => api.get('/admin/users'),
+  updateSubscription:    (id, status) => api.put(`/admin/users/${id}/subscription`, { subscriptionStatus: status }),
 };
 
 // Health API — used to check if the backend is running

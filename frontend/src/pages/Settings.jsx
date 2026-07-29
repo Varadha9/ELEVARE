@@ -39,11 +39,13 @@ export function Settings() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
+  const subStatus = user?.subscriptionStatus || 'trial';
+  const trialDaysLeft = user?.trialDaysLeft ?? 7;
 
   const [darkMode, setDarkMode]       = useState(() => document.documentElement.classList.contains('dark'));
   const [notifs, setNotifs]           = useState(() => localStorage.getItem('notifications') !== 'false');
   const [emailNotifs, setEmailNotifs] = useState(() => localStorage.getItem('emailNotifications') !== 'false');
-  const [profile, setProfile]         = useState({ name: user?.user?.name || user?.name || '', email: user?.user?.email || user?.email || '' });
+  const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '' });
   const [passwords, setPasswords]     = useState({ current: '', new: '', confirm: '' });
   const [showPw, setShowPw]           = useState(false);
   const [loading, setLoading]         = useState(false);
@@ -185,6 +187,40 @@ export function Settings() {
             <Button onClick={changePassword} loading={loading} variant="secondary">
               {!loading && 'Change Password'}
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Subscription Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Shield className="w-4 h-4" /> Subscription</CardTitle>
+            <CardDescription>Your current plan</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className={`p-4 rounded-xl border ${
+              subStatus === 'active'  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
+              subStatus === 'expired' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
+                                        'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 capitalize">
+                  {subStatus === 'active' ? '✅ Subscribed' : subStatus === 'expired' ? '❌ Trial Expired' : `🕐 Free Trial`}
+                </p>
+                {subStatus === 'trial' && (
+                  <span className="text-xs font-bold text-amber-700 dark:text-amber-300">{trialDaysLeft} days left</span>
+                )}
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                {subStatus === 'active'  ? 'You have full access to all ELEVARE features.' :
+                 subStatus === 'expired' ? 'Your trial has ended. Subscribe to continue.' :
+                                          `Your free trial gives you full access for 7 days.`}
+              </p>
+              {subStatus !== 'active' && (
+                <Button size="sm" onClick={() => navigate('/subscribe')} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                  {subStatus === 'expired' ? 'Subscribe Now' : 'Upgrade to Pro'}
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
 

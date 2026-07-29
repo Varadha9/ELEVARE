@@ -52,7 +52,7 @@ export function Dashboard() {
     }
   };
 
-  const userName          = user?.user?.name || user?.name || 'there';
+  const userName          = user?.name || 'there';
   const conversationCount = profile?.conversationCount || 0;
   const streak            = profile?.streak || 0;
   const isNewUser         = conversationCount === 0;

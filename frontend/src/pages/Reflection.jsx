@@ -37,7 +37,7 @@ export function Reflection() {
   const slowTimerRef   = useRef(null);
   const { user } = useAuth();
 
-  const userName    = user?.user?.name || user?.name || 'there';
+  const userName    = user?.name || 'there';
   const userInitial = userName[0]?.toUpperCase() || 'U';
 
   useEffect(() => { fetchConversations(); }, []);
