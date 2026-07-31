@@ -28,6 +28,8 @@ export function Navbar({ title = 'Dashboard' }) {
   const isAdmin = user?.role === 'admin';
   const isTrial = user?.subscriptionStatus === 'trial';
   const trialDays = user?.trialDaysLeft ?? 7;
+  const isActive = user?.subscriptionStatus === 'active';
+  const subDaysLeft = user?.subDaysLeft ?? null;
 
   // Close dropdowns when clicking outside them (mousedown fires before blur)
   useEffect(() => {
@@ -135,6 +137,12 @@ export function Navbar({ title = 'Dashboard' }) {
             Trial · {trialDays}d left
           </span>
         )}
+        {!isAdmin && isActive && subDaysLeft !== null && subDaysLeft <= 7 && (
+          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 text-xs font-semibold rounded-full cursor-pointer"
+            onClick={() => window.location.href = '/subscribe'}>
+            Renew · {subDaysLeft}d left
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
@@ -210,6 +218,9 @@ export function Navbar({ title = 'Dashboard' }) {
                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{userData?.email || ''}</p>
                 {!isAdmin && isTrial && (
                   <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">{trialDays} trial days left</p>
+                )}
+                {!isAdmin && isActive && subDaysLeft !== null && subDaysLeft <= 7 && (
+                  <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">Subscription expires in {subDaysLeft}d</p>
                 )}
               </div>
               {/* Profile and Settings both navigate to /settings */}
