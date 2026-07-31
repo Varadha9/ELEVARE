@@ -82,6 +82,13 @@ export const adminAPI = {
   updateSubscription:    (id, status) => api.put(`/admin/users/${id}/subscription`, { subscriptionStatus: status }),
 };
 
+// Subscription / Payment API
+export const subscriptionAPI = {
+  getStatus:      ()     => api.get('/subscription/status'),
+  createOrder:    ()     => api.post('/subscription/create-order'),
+  verifyPayment:  (data) => api.post('/subscription/verify-payment', data),
+};
+
 // Health API — used to check if the backend is running
 export const healthAPI = {
   check: () => api.get('/health', { baseURL: import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000' })
