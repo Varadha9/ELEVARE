@@ -1,0 +1,60 @@
+cff-version: 1.2.0
+message: "If you use ELEVARE in your research, please cite it as below."
+type: software
+title: "ELEVARE: An NLP-Driven Ikigai-Based Career Recommendation System"
+abstract: >
+  ELEVARE is a career recommendation system that fuses NLP, the Ikigai
+  philosophical framework, Big Five psychometric modeling, and occupational
+  market data into a unified, explainable recommendation pipeline.
+  It uses EWMA-based longitudinal profiling via daily AI conversations
+  powered by Llama 3.3 70B (Groq API).
+authors:
+  - family-names: Shinde
+    given-names: Tanmay
+    email: shinde.tanmay@gmail.com
+    affiliation: "MIT Art, Design and Technology University"
+  - family-names: Poonawala
+    given-names: Ibrahim
+    email: poonawalaibrahim9@gmail.com
+    affiliation: "MIT Art, Design and Technology University"
+  - family-names: Mandhare
+    given-names: Varad Vikas
+    email: varadmandhare924@gmail.com
+    affiliation: "MIT Art, Design and Technology University"
+  - family-names: Bhujbal
+    given-names: Pallavi
+    email: pallavibhujbal@gmail.com
+    affiliation: "MIT Art, Design and Technology University"
+repository-code: "https://github.com/Varadha9/ELEVARE"
+url: "https://github.com/Varadha9/ELEVARE"
+license: MIT
+version: "1.0.0"
+date-released: "2025-03-26"
+keywords:
+  - career recommendation
+  - NLP
+  - Ikigai
+  - Big Five personality
+  - OCEAN model
+  - EWMA
+  - longitudinal analysis
+  - conversational AI
+  - LLM
+  - psychometric profiling
+preferred-citation:
+  type: article
+  title: >
+    An NLP-Driven Ikigai-Based Career Recommendation Model
+    Using Psychometric and Market Data
+  authors:
+    - family-names: Shinde
+      given-names: Tanmay
+    - family-names: Poonawala
+      given-names: Ibrahim
+    - family-names: Mandhare
+      given-names: Varad Vikas
+    - family-names: Bhujbal
+      given-names: Pallavi
+  journal: "IEEE Access"
+  year: 2025
+  url: "https://github.com/Varadha9/ELEVARE"
