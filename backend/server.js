@@ -7,6 +7,8 @@ import jwt from 'jsonwebtoken';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import { body, validationResult } from 'express-validator';
+import Razorpay from 'razorpay';
+import crypto from 'crypto';
 
 // Load environment variables
 dotenv.config();
@@ -34,6 +36,8 @@ if (!USE_MEMORY_DB) {
       role: { type: String, enum: ['user', 'admin'], default: 'user' },
       trialStartDate: { type: Date, default: Date.now },
       subscriptionStatus: { type: String, enum: ['trial', 'active', 'expired'], default: 'trial' },
+      subscriptionEndDate: { type: Date, default: null },
+      razorpayOrderId: { type: String, default: null },
       createdAt: { type: Date, default: Date.now }
     });
 
@@ -285,11 +289,28 @@ const handleValidation = (req, res) => {
   return true;
 };
 
+// Razorpay instance (lazy — only created when keys are present)
+const getRazorpay = () => {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  if (!keyId || !keySecret) throw new Error('Razorpay keys not configured');
+  return new Razorpay({ key_id: keyId, key_secret: keySecret });
+};
+
 // Trial check middleware — blocks expired trial users (admins always pass)
 const checkSubscription = (req, res, next) => {
   const u = req.user;
   if (!u) return next();
-  if (u.role === 'admin' || u.subscriptionStatus === 'active') return next();
+  if (u.role === 'admin') return next();
+  // Active subscription — check if it hasn't expired
+  if (u.subscriptionStatus === 'active') {
+    if (u.subscriptionEndDate && Date.now() > new Date(u.subscriptionEndDate).getTime()) {
+      // Mark as expired asynchronously
+      if (!USE_MEMORY_DB && User) User.findByIdAndUpdate(u.userId, { subscriptionStatus: 'expired' }).catch(() => {});
+      return res.status(403).json({ success: false, error: { message: 'Subscription expired. Please renew.', code: 'TRIAL_EXPIRED' } });
+    }
+    return next();
+  }
   if (u.subscriptionStatus === 'expired') {
     return res.status(403).json({ success: false, error: { message: 'Trial expired. Please subscribe to continue.', code: 'TRIAL_EXPIRED' } });
   }
@@ -310,7 +331,7 @@ const requireAdmin = (req, res, next) => {
 };
 
 // JWT middleware
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) {
@@ -323,11 +344,12 @@ const verifyToken = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev_secret');
     // Attach fresh subscription info from DB if available
     if (!USE_MEMORY_DB && User) {
-      const dbUser = await User.findById(decoded.userId).select('role trialStartDate subscriptionStatus').lean();
+      const dbUser = await User.findById(decoded.userId).select('role trialStartDate subscriptionStatus subscriptionEndDate').lean();
       if (dbUser) {
         decoded.role = dbUser.role;
         decoded.trialStartDate = dbUser.trialStartDate;
         decoded.subscriptionStatus = dbUser.subscriptionStatus;
+        decoded.subscriptionEndDate = dbUser.subscriptionEndDate;
       }
     } else if (USE_MEMORY_DB && memoryDB) {
       const dbUser = await memoryDB.findUserById(decoded.userId);
@@ -335,6 +357,7 @@ const verifyToken = (req, res, next) => {
         decoded.role = dbUser.role || 'user';
         decoded.trialStartDate = dbUser.trialStartDate || dbUser.createdAt;
         decoded.subscriptionStatus = dbUser.subscriptionStatus || 'trial';
+        decoded.subscriptionEndDate = dbUser.subscriptionEndDate || null;
       }
     }
     req.user = decoded;
@@ -346,6 +369,147 @@ const verifyToken = (req, res, next) => {
     });
   }
 };
+
+// ── Subscription / Payment Routes ──────────────────────────────────────────
+
+// POST /api/subscription/create-order — creates a Razorpay order for ₹499/month
+app.post('/api/subscription/create-order', verifyToken, async (req, res) => {
+  try {
+    const razorpay = getRazorpay();
+    const order = await razorpay.orders.create({
+      amount: 49900, // ₹499 in paise
+      currency: 'INR',
+      receipt: `order_${req.user.userId}_${Date.now()}`,
+      notes: { userId: req.user.userId.toString() }
+    });
+
+    // Persist orderId on user so we can verify it later
+    if (!USE_MEMORY_DB && User) {
+      await User.findByIdAndUpdate(req.user.userId, { razorpayOrderId: order.id });
+    } else if (USE_MEMORY_DB && memoryDB) {
+      const u = await memoryDB.findUserById(req.user.userId);
+      if (u) { u.razorpayOrderId = order.id; memoryDB.users.set(req.user.userId, u); }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: process.env.RAZORPAY_KEY_ID
+      }
+    });
+  } catch (err) {
+    console.error('Create order error:', err.message);
+    res.status(500).json({ success: false, error: { message: err.message || 'Failed to create payment order' } });
+  }
+});
+
+// POST /api/subscription/verify-payment — verifies Razorpay signature and activates subscription
+app.post('/api/subscription/verify-payment', verifyToken, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ success: false, error: { message: 'Missing payment fields' } });
+    }
+
+    const expectedSig = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex');
+
+    if (expectedSig !== razorpay_signature) {
+      return res.status(400).json({ success: false, error: { message: 'Payment verification failed' } });
+    }
+
+    // Activate subscription for 30 days
+    const subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    if (!USE_MEMORY_DB && User) {
+      await User.findByIdAndUpdate(req.user.userId, {
+        subscriptionStatus: 'active',
+        subscriptionEndDate,
+        razorpayOrderId: razorpay_order_id
+      });
+    } else if (USE_MEMORY_DB && memoryDB) {
+      const u = await memoryDB.findUserById(req.user.userId);
+      if (u) {
+        u.subscriptionStatus = 'active';
+        u.subscriptionEndDate = subscriptionEndDate;
+        memoryDB.users.set(req.user.userId, u);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Subscription activated successfully',
+      data: { subscriptionStatus: 'active', subscriptionEndDate }
+    });
+  } catch (err) {
+    console.error('Verify payment error:', err.message);
+    res.status(500).json({ success: false, error: { message: 'Payment verification error' } });
+  }
+});
+
+// POST /api/subscription/webhook — Razorpay webhook for async payment events
+app.post('/api/subscription/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const sig = req.headers['x-razorpay-signature'];
+      const expected = crypto.createHmac('sha256', webhookSecret).update(req.body).digest('hex');
+      if (sig !== expected) return res.status(400).json({ error: 'Invalid signature' });
+    }
+
+    const event = JSON.parse(req.body.toString());
+    if (event.event === 'payment.captured') {
+      const notes = event.payload?.payment?.entity?.notes || {};
+      const userId = notes.userId;
+      if (userId) {
+        const subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        if (!USE_MEMORY_DB && User) {
+          await User.findByIdAndUpdate(userId, { subscriptionStatus: 'active', subscriptionEndDate });
+        }
+      }
+    }
+    res.json({ received: true });
+  } catch (err) {
+    console.error('Webhook error:', err.message);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+// GET /api/subscription/status — returns current subscription info
+app.get('/api/subscription/status', verifyToken, async (req, res) => {
+  try {
+    let user;
+    if (!USE_MEMORY_DB && User) {
+      user = await User.findById(req.user.userId).select('subscriptionStatus subscriptionEndDate trialStartDate role').lean();
+    } else if (USE_MEMORY_DB && memoryDB) {
+      user = await memoryDB.findUserById(req.user.userId);
+    }
+    if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } });
+
+    const trialEnd = new Date(user.trialStartDate).getTime() + 7 * 24 * 60 * 60 * 1000;
+    const trialDaysLeft = user.subscriptionStatus === 'trial' ? Math.max(0, Math.ceil((trialEnd - Date.now()) / 86400000)) : null;
+    const subDaysLeft = user.subscriptionStatus === 'active' && user.subscriptionEndDate
+      ? Math.max(0, Math.ceil((new Date(user.subscriptionEndDate).getTime() - Date.now()) / 86400000))
+      : null;
+
+    res.json({
+      success: true,
+      data: {
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionEndDate: user.subscriptionEndDate,
+        trialDaysLeft,
+        subDaysLeft
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+  }
+});
 
 // Routes
 app.get('/', (req, res) => {
@@ -503,6 +667,8 @@ app.post('/api/auth/login',
 
     const trialEndLogin = new Date(user.trialStartDate || user.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000;
     const trialDaysLeftLogin = (user.subscriptionStatus || 'trial') === 'trial' ? Math.max(0, Math.ceil((trialEndLogin - Date.now()) / 86400000)) : null;
+    const subDaysLeftLogin = (user.subscriptionStatus === 'active' && user.subscriptionEndDate)
+      ? Math.max(0, Math.ceil((new Date(user.subscriptionEndDate).getTime() - Date.now()) / 86400000)) : null;
     res.json({
       success: true,
       message: 'Login successful',
@@ -510,7 +676,9 @@ app.post('/api/auth/login',
         user: {
           id: user._id, name: user.name, email: user.email, age: user.age,
           education: user.education, createdAt: user.createdAt,
-          role: user.role || 'user', subscriptionStatus: user.subscriptionStatus || 'trial', trialDaysLeft: trialDaysLeftLogin
+          role: user.role || 'user', subscriptionStatus: user.subscriptionStatus || 'trial',
+          subscriptionEndDate: user.subscriptionEndDate || null,
+          trialDaysLeft: trialDaysLeftLogin, subDaysLeft: subDaysLeftLogin
         },
         token
       }
@@ -556,12 +724,16 @@ app.get('/api/profile', verifyToken, async (req, res) => {
     // Compute trial info
     const trialEnd = new Date(user.trialStartDate || user.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000;
     const trialDaysLeft = (user.subscriptionStatus || 'trial') === 'trial' ? Math.max(0, Math.ceil((trialEnd - Date.now()) / 86400000)) : null;
+    const subDaysLeft = (user.subscriptionStatus === 'active' && user.subscriptionEndDate)
+      ? Math.max(0, Math.ceil((new Date(user.subscriptionEndDate).getTime() - Date.now()) / 86400000)) : null;
 
     res.json({
       success: true,
       data: {
         user: { id: user._id, name: user.name, email: user.email, age: user.age, education: user.education, createdAt: user.createdAt,
-          role: user.role || 'user', subscriptionStatus: user.subscriptionStatus || 'trial', trialDaysLeft },
+          role: user.role || 'user', subscriptionStatus: user.subscriptionStatus || 'trial',
+          subscriptionEndDate: user.subscriptionEndDate || null,
+          trialDaysLeft, subDaysLeft },
         profile: _profile
       }
     });
