@@ -27,15 +27,31 @@ import { NotFound }    from './pages/NotFound';
 import { SubscriptionWall } from './pages/SubscriptionWall';
 import { AdminDashboard }   from './pages/AdminDashboard';
 
+// RenewalBanner — shows for active subscribers within 7 days of expiry
+function RenewalBanner() {
+  const { user } = useAuth();
+  if (!user || user.role === 'admin' || user.subscriptionStatus !== 'active') return null;
+  const days = user.subDaysLeft;
+  if (days === null || days === undefined || days > 7) return null;
+  return (
+    <div className="bg-orange-500 text-white text-center text-sm py-2 px-4">
+      ⚠️ Your subscription expires in <strong>{days} day{days !== 1 ? 's' : ''}</strong> —{' '}
+      <button onClick={() => window.location.href = '/subscribe'} className="underline font-semibold">Renew now</button>
+    </div>
+  );
+}
+
 // TrialBanner — shows days remaining for trial users
 function TrialBanner() {
   const { user } = useAuth();
   if (!user || user.role === 'admin' || user.subscriptionStatus !== 'trial') return null;
   const days = user.trialDaysLeft ?? 7;
   if (days <= 0) return null;
+  const urgent = days <= 2;
   return (
-    <div className="bg-indigo-600 text-white text-center text-sm py-2 px-4">
-      🎉 Free trial: <strong>{days} day{days !== 1 ? 's' : ''}</strong> remaining —{' '}
+    <div className={`${urgent ? 'bg-red-600' : 'bg-indigo-600'} text-white text-center text-sm py-2 px-4`}>
+      {urgent ? '⚠️' : '🎉'} Free trial:{' '}
+      <strong>{days} day{days !== 1 ? 's' : ''}</strong> remaining —{' '}
       <button onClick={() => window.location.href = '/subscribe'} className="underline font-semibold">Subscribe now</button>
     </div>
   );
@@ -93,6 +109,7 @@ function AppContent() {
 
   return (
     <>
+      <RenewalBanner />
       <TrialBanner />
       <AnimatedRoutes />
     </>
