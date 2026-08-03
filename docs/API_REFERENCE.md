@@ -1,40 +1,25 @@
-# 🔌 ELEVARE API Reference
+# API Reference
 
-## Overview
-
-ELEVARE uses a combination of **external APIs** and **internal REST APIs** to power its AI-driven career discovery platform.
+ELEVARE uses one external API (Groq) and two internal REST APIs (Backend + AI Service).
 
 ---
 
-## 🌐 External APIs
+## External APIs
 
-### 1. **Groq API** (Primary LLM)
+### Groq API (LLM)
 
-**Purpose**: Intelligent conversational AI for career coaching
+**Purpose:** Intelligent conversational AI for career coaching
 
-**Provider**: Groq  
-**Model**: Llama 3.3 70B Versatile  
-**Endpoint**: `https://api.groq.com/openai/v1/chat/completions`
+**Provider:** Groq · **Model:** Llama 3.3 70B Versatile  
+**Endpoint:** `POST https://api.groq.com/openai/v1/chat/completions`
 
-#### Configuration:
+**Configuration:**
 ```env
-GROQ_API_KEY=your_groq_api_key_here
+# ai-services/.env
+GROQ_API_KEY=<your key from https://console.groq.com/keys>
 ```
 
-#### Usage:
-```python
-# ai-services/utils/llm_client.py
-client = GroqLLMClient()
-response = client.generate_response(
-    system_prompt="You are ELEVARE Career Coach...",
-    user_message="I enjoy coding",
-    conversation_history=[...],
-    temperature=0.7,
-    max_tokens=500
-)
-```
-
-#### Request Format:
+**Request format:**
 ```json
 {
   "model": "llama-3.3-70b-versatile",
@@ -47,69 +32,61 @@ response = client.generate_response(
 }
 ```
 
-#### Response Format:
+**Response format:**
 ```json
 {
   "choices": [
     {
       "message": {
         "role": "assistant",
-        "content": "That's great! What kind of coding projects..."
+        "content": "That's great! What kind of coding projects do you find most engaging?"
       }
     }
   ]
 }
 ```
 
-#### Pricing:
-- **Free Tier**: 30 requests/minute
-- **Paid Tier**: Higher limits, pay-per-token
-- **Cost**: ~$0.59 per 1M input tokens, ~$0.79 per 1M output tokens
+**Pricing:**
+- Free tier: 30 requests/minute
+- Paid tier: ~$0.59 / 1M input tokens · ~$0.79 / 1M output tokens
 
-#### Documentation:
-- **API Docs**: https://console.groq.com/docs
-- **Get API Key**: https://console.groq.com/keys
+**Docs:** https://console.groq.com/docs · **Get key:** https://console.groq.com/keys
 
 ---
 
-### 2. **MongoDB** (Database Service)
+### MongoDB
 
-**Purpose**: NoSQL database for storing user data, conversations, profiles
+**Purpose:** NoSQL database for users, profiles, conversations, recommendations
 
-**Provider**: MongoDB Inc.  
-**Version**: 6+
-
-#### Configuration:
+**Configuration:**
 ```env
+# Local
 MONGODB_URI=mongodb://localhost:27017/elevare
-# OR for cloud
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/elevare
+# Atlas (production)
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/elevare
 ```
 
-#### Collections:
-- `users` - User authentication
-- `userprofiles` - Behavioral traits, personality, Ikigai
-- `conversations` - Chat history
-- `recommendations` - Career suggestions
-- `careers` - Career database
+**Collections:** `users` · `userprofiles` · `conversations` · `recommendations` · `careers`
 
-#### Pricing:
-- **Local**: Free (self-hosted)
-- **MongoDB Atlas**: Free tier (512MB), Paid tiers available
+**Pricing:** Free (self-hosted) · MongoDB Atlas free M0 tier (512 MB)
 
 ---
 
-## 🏗️ Internal REST APIs
+## Backend REST API
 
-### Backend API (Node.js/Express) - Port 5000
+**Base URL:** `http://localhost:5000` (dev) · `https://your-backend.com` (prod)
 
-Base URL: `http://localhost:5000`
+All protected endpoints require:
+```http
+Authorization: Bearer <jwt_token>
+```
 
 ---
 
-#### **Authentication Endpoints**
+### Authentication
 
-##### 1. Register User
+#### Register User
+
 ```http
 POST /api/auth/register
 Content-Type: application/json
@@ -117,13 +94,13 @@ Content-Type: application/json
 {
   "name": "John Doe",
   "email": "john@example.com",
-  "password": "password123",
+  "password": "<your_password>",
   "age": 22,
   "education": "undergraduate"
 }
 ```
 
-**Response:**
+**Response `201`:**
 ```json
 {
   "success": true,
@@ -139,34 +116,57 @@ Content-Type: application/json
 }
 ```
 
-##### 2. Login User
+**Validation:** password min 8 chars, uppercase + lowercase + number required.
+
+---
+
+#### Login User
+
 ```http
 POST /api/auth/login
 Content-Type: application/json
 
 {
   "email": "john@example.com",
-  "password": "password123"
+  "password": "<your_password>"
 }
 ```
 
-##### 3. Get Current User
+---
+
+#### Change Password
+
 ```http
-GET /api/auth/me
+PUT /api/auth/change-password
+Authorization: Bearer <token>
+
+{
+  "currentPassword": "<current_password>",
+  "newPassword": "<new_password>"
+}
+```
+
+---
+
+#### Delete Account
+
+```http
+DELETE /api/auth/account
 Authorization: Bearer <token>
 ```
 
 ---
 
-#### **Profile Endpoints**
+### Profile
 
-##### 1. Get User Profile
+#### Get Profile
+
 ```http
 GET /api/profile
 Authorization: Bearer <token>
 ```
 
-**Response:**
+**Response `200`:**
 ```json
 {
   "success": true,
@@ -174,136 +174,156 @@ Authorization: Bearer <token>
     "userId": "507f1f77bcf86cd799439011",
     "behavioralTraits": {
       "creativity": 75,
-      "analytical": 80,
-      "leadership": 60
+      "analyticalThinking": 80,
+      "leadership": 60,
+      "teamwork": 70,
+      "communication": 65,
+      "problemSolving": 78,
+      "adaptability": 60,
+      "empathy": 63
     },
     "personality": {
-      "openness": 70,
-      "conscientiousness": 65
+      "openness": 0.72,
+      "conscientiousness": 0.68,
+      "extraversion": 0.55,
+      "agreeableness": 0.70,
+      "neuroticism": 0.32
     },
     "ikigai": {
-      "passion": 75,
-      "mission": 60,
-      "vocation": 55,
-      "profession": 70
+      "whatYouLove": ["technology", "problem-solving"],
+      "whatYouAreGoodAt": ["programming", "analysis"],
+      "whatTheWorldNeeds": ["innovation"],
+      "whatYouCanBePaidFor": ["software development"]
     }
   }
 }
 ```
 
-##### 2. Update Profile
+---
+
+#### Update Profile
+
 ```http
 PUT /api/profile
 Authorization: Bearer <token>
-Content-Type: application/json
 
 {
   "name": "John Updated",
-  "age": 23
+  "email": "john.updated@example.com"
 }
 ```
 
-##### 3. Delete Account
-```http
-DELETE /api/profile
-Authorization: Bearer <token>
-```
+Email uniqueness is enforced — returns `409` if the email is already taken by another user.
 
-##### 4. Export User Data
+---
+
+#### Export User Data
+
 ```http
 GET /api/profile/export
 Authorization: Bearer <token>
 ```
 
+Returns all user data including profile and up to 100 conversations.
+
 ---
 
-#### **Conversation Endpoints**
+### Conversations
 
-##### 1. Send Message
+#### Send Message
+
 ```http
 POST /api/conversations/message
 Authorization: Bearer <token>
-Content-Type: application/json
 
 {
   "message": "I really enjoy solving complex coding problems"
 }
 ```
 
-**Response:**
+**Response `200`:**
 ```json
 {
   "success": true,
   "data": {
-    "response": "That's great! What kind of coding projects...",
+    "response": "That's great! What kind of coding projects do you find most engaging?",
     "analysis": {
       "sentiment": "positive",
-      "emotions": ["joy"],
+      "emotions": [{"emotion": "joy", "score": 0.85}],
       "keywords": ["coding", "problems", "solving"],
       "detectedTraits": {
-        "analytical": 5,
-        "creativity": 3
+        "analyticalThinking": 5,
+        "problemSolving": 3
       }
     },
     "traitUpdates": {
-      "analytical": 82,
-      "creativity": 76
+      "analyticalThinking": 7.3,
+      "problemSolving": 7.9
     }
   }
 }
 ```
 
-##### 2. Get Conversation History
+---
+
+#### Get Conversation History
+
 ```http
 GET /api/conversations/history?limit=20
 Authorization: Bearer <token>
 ```
 
-##### 3. Get Specific Conversation
-```http
-GET /api/conversations/:conversationId
-Authorization: Bearer <token>
-```
-
 ---
 
-#### **Recommendation Endpoints**
+### Recommendations
 
-##### 1. Generate Recommendations
+#### Generate Recommendations
+
 ```http
 POST /api/recommendations/generate
 Authorization: Bearer <token>
 ```
 
-**Response:**
+Requires at least 1 conversation. Triggers the AI service composite scoring pipeline.
+
+**Response `200`:**
 ```json
 {
   "success": true,
   "data": {
     "recommendations": [
       {
-        "career": "Software Engineer",
-        "confidence": 85,
-        "reasoning": "Strong analytical and problem-solving skills...",
-        "skills": ["Python", "JavaScript", "Problem Solving"],
-        "nextSteps": ["Build portfolio projects", "Learn algorithms"]
+        "careerTitle": "Software Engineer",
+        "confidenceScore": 87,
+        "componentScores": {
+          "psychometric": 0.82,
+          "ikigaiAlignment": 0.75,
+          "marketViability": 0.91
+        },
+        "reasoning": "Strong analytical and problem-solving traits",
+        "requiredSkills": ["Python", "JavaScript", "Problem Solving"]
       }
     ]
   }
 }
 ```
 
-##### 2. Get All Recommendations
+---
+
+#### Get All Recommendations
+
 ```http
 GET /api/recommendations
 Authorization: Bearer <token>
 ```
 
-##### 3. Submit Feedback
+---
+
+#### Submit Feedback
+
 ```http
 POST /api/recommendations/:id/feedback
 Authorization: Bearer <token>
-Content-Type: application/json
 
 {
   "interested": true,
@@ -313,15 +333,26 @@ Content-Type: application/json
 
 ---
 
-### AI Services API (Python/FastAPI) - Port 8000
+### Health
 
-Base URL: `http://localhost:8000`
+```http
+GET /health
+```
+
+Returns `healthy` (200) or `degraded` (503).
 
 ---
 
-#### **Core Processing Endpoints**
+## AI Service API
 
-##### 1. Process Message (Main Endpoint)
+**Base URL:** `http://localhost:8000`
+
+These endpoints are called by the backend — not directly by the frontend.
+
+---
+
+#### Process Message
+
 ```http
 POST /process
 Content-Type: application/json
@@ -344,21 +375,24 @@ Content-Type: application/json
     "emotions": [{"emotion": "joy", "score": 0.85}],
     "sentiment": "positive",
     "keywords": ["helping", "people"],
-    "detectedTraits": [
-      {"trait": "empathy", "value": 5},
-      {"trait": "communication", "value": 3}
-    ]
+    "detectedTraits": {
+      "empathy": 5,
+      "communication": 3
+    }
   },
   "traitUpdates": {
     "behavioralTraits": {
-      "empathy": 78,
-      "communication": 72
+      "empathy": 7.8,
+      "communication": 7.2
     }
   }
 }
 ```
 
-##### 2. Generate Recommendations
+---
+
+#### Generate Recommendations
+
 ```http
 POST /recommend
 Content-Type: application/json
@@ -368,7 +402,10 @@ Content-Type: application/json
 }
 ```
 
-##### 3. Process Feedback
+---
+
+#### Submit Feedback
+
 ```http
 POST /feedback
 Content-Type: application/json
@@ -381,168 +418,97 @@ Content-Type: application/json
 }
 ```
 
-##### 4. Health Check
+---
+
+#### Health Check
+
 ```http
 GET /health
 ```
 
-**Response:**
 ```json
 {
   "status": "healthy",
-  "services": ["nlp", "behavioral", "recommendation"]
+  "services": ["nlp", "behavioral", "recommendation"],
+  "groq_api_configured": true,
+  "mongodb_configured": true
 }
 ```
 
 ---
 
-## 📚 Third-Party Libraries (Not APIs)
+## Third-Party Libraries
 
-### NLP & AI Processing
-
-#### 1. **NLTK** (Natural Language Toolkit)
-- **Purpose**: Text processing, tokenization, keyword extraction
-- **Usage**: `ai-services/services/nlp_processor.py`
-- **Cost**: Free (open-source)
-
-#### 2. **TextBlob**
-- **Purpose**: Sentiment analysis, emotion detection
-- **Usage**: `ai-services/services/nlp_processor.py`
-- **Cost**: Free (open-source)
-
-#### 3. **Hugging Face Transformers** (Optional)
-- **Purpose**: Advanced NLP models
-- **Models**: 
-  - `j-hartmann/emotion-english-distilroberta-base`
-  - `distilbert-base-uncased-finetuned-sst-2-english`
-- **Cost**: Free (open-source)
+| Library | Purpose | Cost |
+|---------|---------|------|
+| NLTK | Tokenization, keyword extraction | Free |
+| TextBlob | Sentiment analysis | Free |
+| Groq SDK | LLM API client | Free (usage-based) |
 
 ---
 
-## 🔑 API Keys Required
+## API Keys Required
 
-### Required:
-1. **Groq API Key** - For LLM conversations
-   - Get from: https://console.groq.com/keys
-   - Set in: `ai-services/.env` as `GROQ_API_KEY`
-
-### Optional:
-2. **MongoDB Atlas** - For cloud database (if not using local)
-   - Get from: https://www.mongodb.com/cloud/atlas
-   - Set in: `.env` as `MONGODB_URI`
+| Key | Where to get | Where to set |
+|-----|-------------|-------------|
+| `GROQ_API_KEY` | https://console.groq.com/keys | `ai-services/.env` |
+| `MONGODB_URI` | https://www.mongodb.com/cloud/atlas | `backend/.env` and `ai-services/.env` |
 
 ---
 
-## 📊 API Usage Summary
+## Security
 
-| API | Type | Cost | Purpose | Required |
-|-----|------|------|---------|----------|
-| **Groq API** | External | Paid (Free tier) | LLM conversations | ✅ Yes |
-| **MongoDB** | Database | Free (local) | Data storage | ✅ Yes |
-| **Backend API** | Internal | Free | Business logic | ✅ Yes |
-| **AI Services API** | Internal | Free | ML processing | ✅ Yes |
-| **NLTK** | Library | Free | NLP processing | ✅ Yes |
-| **TextBlob** | Library | Free | Sentiment analysis | ✅ Yes |
-| **Hugging Face** | Library | Free | Advanced NLP | ❌ Optional |
+- All protected endpoints require a valid JWT token in the `Authorization: Bearer <token>` header
+- Tokens expire in 7 days (configurable via `JWT_EXPIRE`)
+- Rate limiting: 100 req/15min globally, 10 req/15min on auth endpoints
+- API key is server-side only — never exposed to the frontend
 
 ---
 
-## 🔒 Security Best Practices
+## Error Responses
 
-### API Key Management:
-```bash
-# ✅ DO: Store in .env file
-GROQ_API_KEY=your_key_here
-
-# ❌ DON'T: Hardcode in source code
-api_key = "gsk_abc123..."  # NEVER DO THIS
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Description of the error",
+    "details": [
+      { "field": "email", "message": "Please provide a valid email address" }
+    ]
+  }
+}
 ```
 
-### Authentication:
-- All protected endpoints require JWT token
-- Token expires in 7 days (configurable)
-- Use `Authorization: Bearer <token>` header
-
-### Rate Limiting:
-- Backend API: 100 requests per 15 minutes
-- Groq API: 30 requests per minute (free tier)
-
----
-
-## 🧪 Testing APIs
-
-### Test Backend:
-```bash
-curl http://localhost:5000/health
-```
-
-### Test AI Service:
-```bash
-curl http://localhost:8000/health
-```
-
-### Test LLM Integration:
-```bash
-cd ai-services
-python test_llm_integration.py
-```
-
-### Test Full Flow:
-```bash
-# 1. Register
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test","email":"test@test.com","password":"test123","age":22,"education":"undergraduate"}'
-
-# 2. Login
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@test.com","password":"test123"}'
-
-# 3. Send Message
-curl -X POST http://localhost:5000/api/conversations/message \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"message":"I enjoy coding"}'
-```
+| Code | Meaning |
+|------|---------|
+| `200` | Success |
+| `201` | Created |
+| `400` | Validation failed |
+| `401` | Unauthorized |
+| `404` | Not found |
+| `409` | Conflict (email already exists) |
+| `429` | Rate limit exceeded |
+| `500` | Internal server error |
 
 ---
 
-## 📖 Additional Resources
+## Quick Reference
 
-- **Groq API Docs**: https://console.groq.com/docs
-- **MongoDB Docs**: https://docs.mongodb.com/
-- **FastAPI Docs**: https://fastapi.tiangolo.com/
-- **Express.js Docs**: https://expressjs.com/
-- **NLTK Docs**: https://www.nltk.org/
-- **TextBlob Docs**: https://textblob.readthedocs.io/
-
----
-
-## 💡 Quick Reference
-
-### Environment Variables:
 ```env
 # Backend (.env)
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/elevare
-JWT_SECRET=your_secret_key
+JWT_SECRET=<strong secret>
 AI_SERVICE_URL=http://localhost:8000
 
 # AI Services (.env)
-GROQ_API_KEY=your_groq_api_key
+GROQ_API_KEY=<your key>
 MONGODB_URI=mongodb://localhost:27017/elevare
 AI_SERVICE_PORT=8000
 ```
 
-### Service URLs:
-- **Frontend**: http://localhost:3000
-- **Backend**: http://localhost:5000
-- **AI Service**: http://localhost:8000
-- **MongoDB**: mongodb://localhost:27017
-
----
-
-**Built with ❤️ using Groq API (Llama 3.3 70B)**
-
-© 2024 ELEVARE Project
+Service URLs:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:5000
+- AI Service: http://localhost:8000
+- MongoDB: mongodb://localhost:27017

@@ -133,7 +133,7 @@ pytest
 # Manual integration test
 curl -X POST http://localhost:5000/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"name":"Test","email":"test@example.com","password":"Test1234","age":22,"education":"undergraduate"}'
+  -d '{"name":"Test","email":"test@example.com","password":"<your_password>","age":22,"education":"undergraduate"}'
 ```
 
 ---
@@ -243,7 +243,7 @@ curl http://localhost:8000/health
 # Test authentication
 curl -X POST http://localhost:5000/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"name":"Test User","email":"test@test.com","password":"Test1234","age":22,"education":"undergraduate"}'
+  -d '{"name":"Test User","email":"test@test.com","password":"<your_password>","age":22,"education":"undergraduate"}'
 ```
 
 ### Logs

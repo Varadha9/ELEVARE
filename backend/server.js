@@ -13,6 +13,16 @@ import crypto from 'crypto';
 // Load environment variables
 dotenv.config();
 
+// Fail fast on missing critical secrets — never fall back to insecure defaults
+if (!process.env.JWT_SECRET) {
+  console.error('❌ FATAL: JWT_SECRET environment variable is not set. Refusing to start.');
+  process.exit(1);
+}
+if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'Admin@1234') {
+  console.error('❌ FATAL: ADMIN_PASSWORD must be set to a strong custom value. Refusing to start.');
+  process.exit(1);
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 let USE_MEMORY_DB = process.env.USE_MEMORY_DB === 'true';
@@ -97,7 +107,7 @@ if (!USE_MEMORY_DB) {
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@elevare.com';
     const adminExists = await User.findOne({ email: adminEmail });
     if (!adminExists) {
-      const hashed = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Admin@1234', 12);
+      const hashed = await bcrypt.hash(process.env.ADMIN_PASSWORD, 12);
       await User.create({ name: 'Admin', email: adminEmail, password: hashed, age: 30, education: 'other', role: 'admin', subscriptionStatus: 'active' });
       console.log(`✅ Admin user created: ${adminEmail}`);
     }
@@ -185,6 +195,35 @@ if (USE_MEMORY_DB) {
     }
   };
 }
+
+// Razorpay webhook MUST be registered before express.json() so req.body is a raw Buffer
+// express.json() would parse it into an object, breaking HMAC signature verification
+app.post('/api/subscription/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const sig = req.headers['x-razorpay-signature'];
+      const expected = crypto.createHmac('sha256', webhookSecret).update(req.body).digest('hex');
+      if (sig !== expected) return res.status(400).json({ error: 'Invalid signature' });
+    }
+
+    const event = JSON.parse(req.body.toString());
+    if (event.event === 'payment.captured') {
+      const notes = event.payload?.payment?.entity?.notes || {};
+      const userId = notes.userId;
+      if (userId) {
+        const subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        if (!USE_MEMORY_DB && User) {
+          await User.findByIdAndUpdate(userId, { subscriptionStatus: 'active', subscriptionEndDate });
+        }
+      }
+    }
+    res.json({ received: true });
+  } catch (err) {
+    console.error('Webhook error:', err.message);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
 
 // Security Middleware
 app.use(helmet({
@@ -341,7 +380,7 @@ const verifyToken = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev_secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     // Attach fresh subscription info from DB if available
     if (!USE_MEMORY_DB && User) {
       const dbUser = await User.findById(decoded.userId).select('role trialStartDate subscriptionStatus subscriptionEndDate').lean();
@@ -452,33 +491,6 @@ app.post('/api/subscription/verify-payment', verifyToken, async (req, res) => {
   }
 });
 
-// POST /api/subscription/webhook — Razorpay webhook for async payment events
-app.post('/api/subscription/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  try {
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-    if (webhookSecret) {
-      const sig = req.headers['x-razorpay-signature'];
-      const expected = crypto.createHmac('sha256', webhookSecret).update(req.body).digest('hex');
-      if (sig !== expected) return res.status(400).json({ error: 'Invalid signature' });
-    }
-
-    const event = JSON.parse(req.body.toString());
-    if (event.event === 'payment.captured') {
-      const notes = event.payload?.payment?.entity?.notes || {};
-      const userId = notes.userId;
-      if (userId) {
-        const subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        if (!USE_MEMORY_DB && User) {
-          await User.findByIdAndUpdate(userId, { subscriptionStatus: 'active', subscriptionEndDate });
-        }
-      }
-    }
-    res.json({ received: true });
-  } catch (err) {
-    console.error('Webhook error:', err.message);
-    res.status(500).json({ error: 'Webhook processing failed' });
-  }
-});
 
 // GET /api/subscription/status — returns current subscription info
 app.get('/api/subscription/status', verifyToken, async (req, res) => {
@@ -599,7 +611,7 @@ app.post('/api/auth/register',
     // Generate JWT
     const token = jwt.sign(
       { userId: user._id, email: user.email },
-      process.env.JWT_SECRET || 'dev_secret',
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
@@ -661,7 +673,7 @@ app.post('/api/auth/login',
     // Generate JWT
     const token = jwt.sign(
       { userId: user._id, email: user.email },
-      process.env.JWT_SECRET || 'dev_secret',
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
@@ -1254,9 +1266,18 @@ app.put('/api/profile', verifyToken, async (req, res) => {
     if (USE_MEMORY_DB) {
       const user = await memoryDB.findUserById(req.user.userId);
       if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } });
+      // Check email uniqueness
+      const existing = await memoryDB.findUserByEmail(email);
+      if (existing && existing._id !== req.user.userId) {
+        return res.status(409).json({ success: false, error: { message: 'Email already in use by another account' } });
+      }
       user.name = name; user.email = email;
       memoryDB.users.set(req.user.userId, user);
     } else {
+      const existing = await User.findOne({ email, _id: { $ne: req.user.userId } });
+      if (existing) {
+        return res.status(409).json({ success: false, error: { message: 'Email already in use by another account' } });
+      }
       await User.findByIdAndUpdate(req.user.userId, { name, email });
     }
     res.json({ success: true, message: 'Profile updated successfully' });
@@ -1270,7 +1291,7 @@ app.put('/api/auth/change-password', verifyToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) return res.status(400).json({ success: false, error: { message: 'Both passwords are required' } });
-    if (newPassword.length < 6) return res.status(400).json({ success: false, error: { message: 'New password must be at least 6 characters' } });
+    if (newPassword.length < 8) return res.status(400).json({ success: false, error: { message: 'New password must be at least 8 characters' } });
 
     let user;
     if (USE_MEMORY_DB) {

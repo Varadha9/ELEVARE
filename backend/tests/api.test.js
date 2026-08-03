@@ -8,7 +8,7 @@ describe('ELEVARE Backend API Tests', () => {
   const testUser = {
     name: 'Test User',
     email: `test${Date.now()}@example.com`,
-    password: 'Test1234',
+    password: process.env.TEST_USER_PASSWORD || 'Test1234!',
     age: 22,
     education: 'undergraduate'
   };
@@ -52,7 +52,7 @@ describe('ELEVARE Backend API Tests', () => {
     it('should reject invalid credentials', async () => {
       const res = await request(app)
         .post('/api/auth/login')
-        .send({ email: testUser.email, password: 'wrongpass' });
+        .send({ email: testUser.email, password: 'wr0ng-pass-invalid' });
       expect(res.status).toBe(401);
     });
   });

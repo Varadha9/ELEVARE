@@ -4,12 +4,12 @@
 
 ## Overview
 
-ELEVARE uses a three-tier microservices architecture. The frontend talks to the Node.js backend over REST. The backend delegates all AI work to a separate Python FastAPI service. Both services share the same MongoDB database.
+ELEVARE is a three-tier microservices system. The React frontend communicates with a Node.js/Express backend over REST. The backend delegates all AI and NLP work to a Python/FastAPI service. Both backend services share the same MongoDB database.
 
 ```
 ┌───────────────────────────────────────┐
 │   Frontend — React 18 + Vite          │
-│   Port 3000                           │
+│   Port 3000 (dev) / 80 (Docker)       │
 │   Chat · Dashboard · Analytics        │
 └──────────────────┬────────────────────┘
                    │ REST / JSON
@@ -24,7 +24,7 @@ ELEVARE uses a three-tier microservices architecture. The frontend talks to the 
 │   AI Services — Python + FastAPI      │
 │   Port 8000                           │
 │   NLP · Behavioral Analysis           │
-│   Groq LLM · Recommendations         │
+│   Groq LLM · Recommendations          │
 └──────────────────┬────────────────────┘
                    │
 ┌──────────────────▼────────────────────┐
@@ -54,10 +54,13 @@ ELEVARE uses a three-tier microservices architecture. The frontend talks to the 
 | Ikigai | `/ikigai` | Four-quadrant Ikigai analysis |
 | Progress | `/progress` | Trait trends, streaks, calendar |
 | Settings | `/settings` | Profile, password, theme, data export |
+| Admin | `/admin` | Admin panel (role-protected) |
 
 **Key patterns:**
 - JWT stored in `localStorage`, attached to all requests via `api.js` Axios interceptor
 - `AuthContext` provides `user`, `token`, `login()`, `logout()` globally
+- `ProtectedRoute` — redirects unauthenticated users to `/login`
+- `AdminRoute` — checks `user.role === 'admin'`, redirects others to `/dashboard`
 - Custom hooks (`useProfile`, `useConversations`) for data fetching with loading/error states
 - All pages have loading skeleton, empty state, and error boundary
 
@@ -68,14 +71,19 @@ ELEVARE uses a three-tier microservices architecture. The frontend talks to the 
 **Stack:** Node.js, Express, Mongoose, JWT, Bcrypt, Helmet
 
 **Security middleware stack (in order):**
-1. `helmet()` — security headers (CSP, HSTS, etc.)
-2. `cors()` — whitelist-based origin validation
-3. `express.json({ limit: '1mb' })` — body parser with size limit
-4. `mongoSanitize()` — strip `$` and `.` from inputs
-5. `globalLimiter` — 100 req / 15 min per IP
-6. `authLimiter` — 10 req / 15 min on login/register
-7. `verifyToken` — JWT validation on protected routes
-8. `express-validator` — field-level input validation
+1. `helmet()` — security headers (CSP, HSTS, X-Frame-Options, etc.)
+2. `cors()` — whitelist-based origin validation via `CORS_ORIGIN` env var
+3. Razorpay webhook route — registered **before** `express.json()` to preserve raw Buffer for HMAC verification
+4. `express.json({ limit: '1mb' })` — body parser with size limit
+5. `mongoSanitize()` — strips `$` and `.` from all inputs to prevent NoSQL injection
+6. `globalLimiter` — 100 req / 15 min per IP
+7. `authLimiter` — 10 req / 15 min on login/register
+8. `verifyToken` — JWT validation on protected routes
+9. `express-validator` — field-level input validation
+
+**Startup guards:**
+- Server exits with `process.exit(1)` if `JWT_SECRET` is missing or weak (< 32 chars)
+- Server exits with `process.exit(1)` if `ADMIN_PASSWORD` is missing or uses the default placeholder
 
 **Routes:**
 
@@ -83,90 +91,94 @@ ELEVARE uses a three-tier microservices architecture. The frontend talks to the 
 |--------|----------|------|-------------|
 | POST | `/api/auth/register` | ❌ | Register user |
 | POST | `/api/auth/login` | ❌ | Login |
-| PUT | `/api/auth/change-password` | ✅ | Change password |
+| PUT | `/api/auth/change-password` | ✅ | Change password (min 8 chars) |
 | DELETE | `/api/auth/account` | ✅ | Delete account |
 | GET | `/api/profile` | ✅ | Get profile + traits |
-| PUT | `/api/profile` | ✅ | Update name/email |
+| PUT | `/api/profile` | ✅ | Update name/email (email uniqueness enforced) |
 | GET | `/api/profile/export` | ✅ | Export all data |
 | POST | `/api/conversations/message` | ✅ | Send message, get AI reply |
 | GET | `/api/conversations/history` | ✅ | Get chat history |
 | GET | `/api/recommendations` | ✅ | Get career recommendations |
 | POST | `/api/recommendations/generate` | ✅ | Trigger recommendation generation |
 | GET | `/health` | ❌ | Service health check |
+| POST | `/api/payment/webhook` | ❌ (raw) | Razorpay webhook (HMAC verified) |
 
-**Fallback strategy:** If the AI service is unavailable, the backend uses a keyword-based NLP fallback and returns generic responses without failing the request.
+**Fallback strategy:** If the AI service is unavailable, the backend uses a keyword-based NLP fallback and returns a generic response without failing the request.
 
 ---
 
 ## AI Services
 
-**Stack:** Python, FastAPI, NLTK, TextBlob, Groq API
+**Stack:** Python, FastAPI, NLTK, TextBlob, Groq API (Llama 3.3 70B)
 
-### NLP Processor
+### NLP Processor (`services/nlp_processor.py`)
 
 Runs on every user message:
 
 ```
 Raw text
-  → lowercase + clean
-  → tokenize (NLTK punkt)
+  → lowercase + strip punctuation
+  → tokenize (NLTK punkt / punkt_tab for NLTK 3.9+)
   → remove stopwords
-  → keyword extraction
+  → keyword extraction (top 10)
   → sentiment score (TextBlob polarity: -1 to +1)
-  → emotion detection (keyword → emotion mapping)
+  → emotion detection (keyword → emotion mapping from emotion_keywords.json)
   → trait signal detection (keyword → trait mapping)
   → personality signal detection (keyword → OCEAN mapping)
 ```
 
-### Behavioral Analyzer
+Data files are loaded from `ai-services/data/` using `os.path.realpath()` with path traversal protection — filenames are validated to stay within the data directory.
+
+### Behavioral Analyzer (`services/behavioral_analyzer.py`)
 
 Updates user profile using **Exponential Weighted Moving Average (EWMA)**:
 
 ```python
 # Trait update (scale 0–10)
-new_trait = old_trait + (detected_signal - old_trait) * learning_rate
-# learning_rate = 0.15
+new_trait = old_trait + (detected_signal - old_trait) * 0.15
 
 # Personality update (scale 0–1)
-new_score = old_score + (signal - old_score) * learning_rate
+new_score = old_score + (signal - old_score) * 0.15
 ```
 
-This means recent conversations have more influence than older ones, allowing profiles to evolve naturally over time.
+Recent conversations have more influence than older ones, allowing profiles to evolve naturally over time.
 
-**Ikigai alignment** is recalculated after every conversation based on top traits, interests, and personality scores:
+**Ikigai alignment** is recalculated after every conversation:
 - `whatYouLove` → high openness + creativity + detected interests
 - `whatYouAreGoodAt` → top 3 behavioral traits
 - `whatTheWorldNeeds` → empathy + leadership + communication
 - `whatYouCanBePaidFor` → analytical + problem-solving + top career skills
 
-### Conversational Agent
+### Conversational Agent (`services/conversational_agent.py`)
 
 Builds a context-aware prompt for the Groq LLM:
 
 ```
-System prompt (career coach persona)
-  + user's current trait profile
+System prompt (career coach persona, personalized to user profile)
+  + NLP analysis of current message (sanitized — HTML/script tags stripped)
   + last 5 conversation turns
-  + NLP analysis of current message
   → Groq API (Llama 3.3 70B)
   → empathetic, focused follow-up question
 ```
 
+All user-controlled values (message, sentiment, emotions, keywords, traits) are sanitized via `_sanitize()` before being embedded in the LLM context string to prevent prompt injection / XSS.
+
 **Retry logic:** 3 attempts with exponential backoff. Falls back to a generic response if all attempts fail.
 
-### Recommendation Engine
+### Recommendation Engine (`services/recommendation_engine.py`)
 
-Scores each career using a weighted composite:
+Scores each career using the composite formula from the paper (Eq. 8):
 
 ```
-Confidence = (trait_match × 0.4) + (personality_fit × 0.3) + (ikigai_alignment × 0.3)
+Score(c) = 0.40 × Psych(c) + 0.35 × Ikigai(c) + 0.25 × Market(c)
 ```
 
-- **Trait match** — cosine similarity between user traits and career trait requirements
-- **Personality fit** — dot product of user OCEAN scores and career OCEAN profile
-- **Ikigai alignment** — overlap between user Ikigai keywords and career keywords
+- **Psych(c)** — cosine similarity between user OCEAN vector and career OCEAN profile
+- **Ikigai(c)** — mean Jaccard similarity across all 4 Ikigai dimensions
+- **Market(c)** — weighted combination of growth rate (40%), salary (35%), LinkedIn demand (25%)
+- **Confidence** — `1 - e^(-0.1 × n_sessions)` grows with conversation count
 
-Returns top 5 careers ranked by confidence score.
+Returns top 5 careers ranked by composite score.
 
 ---
 
@@ -178,10 +190,11 @@ Returns top 5 careers ranked by confidence score.
 ```js
 {
   name: String,
-  email: String (unique),
-  password: String (bcrypt hash),
+  email: String (unique, indexed),
+  password: String (bcrypt, 12 rounds),
   age: Number,
   education: String,
+  role: String ('user' | 'admin'),
   createdAt: Date
 }
 ```
@@ -189,7 +202,7 @@ Returns top 5 careers ranked by confidence score.
 ### `userprofiles`
 ```js
 {
-  userId: ObjectId (ref: users),
+  userId: ObjectId (ref: users, unique),
   behavioralTraits: {
     creativity, analyticalThinking, leadership,
     teamwork, communication, problemSolving,
@@ -262,7 +275,7 @@ db.recommendations.createIndex({ userId: 1, createdAt: -1 })
 3.  Backend validates token and input
 4.  Backend → POST /process on AI service (message + history)
 5.  AI service:
-      a. NLP analysis (sentiment, emotions, traits)
+      a. NLP analysis (sentiment, emotions, traits) — user input sanitized
       b. Fetch user profile from MongoDB
       c. Update traits with EWMA
       d. Update personality
@@ -283,7 +296,7 @@ db.recommendations.createIndex({ userId: 1, createdAt: -1 })
 3.  Backend → POST /recommend on AI service
 4.  AI service:
       a. Fetch user profile
-      b. Score each career (trait + personality + ikigai)
+      b. Score each career (Psych + Ikigai + Market)
       c. Rank top 5 careers
       d. Generate explanations
 5.  AI service → Backend (ranked recommendations)
@@ -296,11 +309,14 @@ db.recommendations.createIndex({ userId: 1, createdAt: -1 })
 
 | Layer | Controls |
 |-------|---------|
+| Startup | `process.exit(1)` if JWT_SECRET or ADMIN_PASSWORD missing/weak |
 | Network | CORS whitelist, HTTPS in production |
 | API | Rate limiting (global + per endpoint), Helmet headers |
-| Input | express-validator + mongoSanitize |
+| Input | express-validator + mongoSanitize + HTML sanitization in AI context |
 | Auth | JWT (HS256, 7-day expiry), bcrypt (12 rounds) |
-| Data | MongoDB — no raw query exposure, sanitized inputs |
+| Files | Path traversal protection on all data file reads |
+| Payments | Razorpay HMAC signature verification on raw webhook body |
+| Logs | Log level sanitized before use in filenames |
 
 ---
 
@@ -308,9 +324,9 @@ db.recommendations.createIndex({ userId: 1, createdAt: -1 })
 
 The architecture is stateless at the API layer — JWT tokens carry auth state, so multiple backend instances can run behind a load balancer without session sharing.
 
-The AI service is the most resource-intensive component (LLM calls). It can be scaled independently of the backend.
+The AI service is the most resource-intensive component (LLM calls, ~2–4s per request). It can be scaled independently of the backend.
 
 For higher traffic:
 - Add Redis for caching profile data and recommendations
 - Use MongoDB Atlas auto-scaling
-- Add a queue (e.g. Bull/BullMQ) for LLM processing to avoid request timeouts
+- Add a queue (e.g. BullMQ) for LLM processing to avoid request timeouts under load

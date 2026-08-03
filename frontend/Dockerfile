@@ -8,6 +8,10 @@ RUN npm ci
 
 COPY . .
 
+# VITE_API_URL must be passed at build time — Vite bakes env vars into the bundle
+ARG VITE_API_URL=http://localhost:5000/api
+ENV VITE_API_URL=$VITE_API_URL
+
 RUN npm run build
 
 FROM nginx:alpine

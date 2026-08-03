@@ -1,85 +1,71 @@
-# 🚀 Production Deployment Guide
-
-## Prerequisites
-
-- MongoDB Atlas account (free tier available)
-- Groq API key from https://console.groq.com/keys
-- Domain name (optional but recommended)
-- Hosting platforms:
-  - **Frontend**: Vercel, Netlify, or AWS S3 + CloudFront
-  - **Backend**: Railway, Render, AWS EC2, or Heroku
-  - **AI Service**: Fly.io, Railway, or AWS Lambda
+# Production Deployment Guide
 
 ---
 
-## Quick Deploy with Docker
+## Prerequisites
 
-### 1. Setup Environment Variables
+- MongoDB Atlas account — https://www.mongodb.com/cloud/atlas (free M0 tier available)
+- Groq API key — https://console.groq.com/keys
+- Hosting platforms:
+  - **Frontend:** Vercel or Netlify
+  - **Backend:** Railway or Render
+  - **AI Service:** Railway or Fly.io
+
+---
+
+## Environment Setup
 
 ```bash
-# Copy template
 cp .env.template .env
-
-# Edit with your values
-nano .env
 ```
 
-Required variables:
-- `MONGODB_URI` - MongoDB Atlas connection string
-- `JWT_SECRET` - Generate with: `openssl rand -base64 32`
-- `GROQ_API_KEY` - From Groq console
-- `CORS_ORIGIN` - Your frontend URL
+Required values in `.env`:
 
-### 2. Deploy with Docker Compose
+```env
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/elevare?retryWrites=true&w=majority
+JWT_SECRET=<generate: openssl rand -base64 32>
+GROQ_API_KEY=<from https://console.groq.com/keys>
+CORS_ORIGIN=https://your-frontend.vercel.app
+```
+
+> The backend will refuse to start if `JWT_SECRET` is missing or shorter than 32 characters.
+
+---
+
+## Docker Deployment
 
 ```bash
 # Build and start all services
-docker-compose up -d
+docker-compose up -d --build
 
-# Check logs
+# View logs
 docker-compose logs -f
 
-# Check health
+# Health checks
 curl http://localhost:5000/health
 curl http://localhost:8000/health
 ```
+
+The `docker-compose.yml` passes `VITE_API_URL` as a build argument to the frontend container so Vite bakes the correct API URL into the bundle at build time.
 
 ---
 
 ## MongoDB Atlas Setup
 
-### 1. Create Cluster
+1. Create a free M0 cluster at https://www.mongodb.com/cloud/atlas
+2. Create a database user with a strong password
+3. Add your server IP to the IP whitelist (or `0.0.0.0/0` for Railway/Render)
+4. Copy the connection string and set it as `MONGODB_URI`
 
-1. Go to https://www.mongodb.com/cloud/atlas
-2. Create free M0 cluster
-3. Choose region closest to your users
-4. Create database user with password
-5. Add IP whitelist (0.0.0.0/0 for development)
-
-### 2. Get Connection String
-
-```
-mongodb+srv://<username>:<password>@cluster.mongodb.net/elevare?retryWrites=true&w=majority
-```
-
-### 3. Configure Indexes (Performance Optimization)
-
-Connect to your cluster and run:
+Create indexes after first deploy:
 
 ```javascript
-use elevare;
+use elevare
 
-// Users collection
-db.users.createIndex({ email: 1 }, { unique: true });
-
-// UserProfiles collection
-db.userprofiles.createIndex({ userId: 1 }, { unique: true });
-
-// Conversations collection
-db.conversations.createIndex({ userId: 1, timestamp: -1 });
-
-// Recommendations collection
-db.recommendations.createIndex({ userId: 1, createdAt: -1 });
+db.users.createIndex({ email: 1 }, { unique: true })
+db.userprofiles.createIndex({ userId: 1 }, { unique: true })
+db.conversations.createIndex({ userId: 1, timestamp: -1 })
+db.recommendations.createIndex({ userId: 1, createdAt: -1 })
 ```
 
 ---
@@ -88,26 +74,23 @@ db.recommendations.createIndex({ userId: 1, createdAt: -1 });
 
 ### Backend
 
-1. Install Railway CLI:
 ```bash
 npm install -g @railway/cli
 railway login
-```
 
-2. Deploy backend:
-```bash
 cd backend
 railway init
 railway up
 ```
 
-3. Add environment variables in Railway dashboard:
+Set in Railway dashboard:
 ```
-MONGODB_URI=your_atlas_uri
-JWT_SECRET=your_secret
+MONGODB_URI=<atlas uri>
+JWT_SECRET=<strong secret>
 AI_SERVICE_URL=https://your-ai-service.railway.app
 CORS_ORIGIN=https://your-frontend.vercel.app
 NODE_ENV=production
+ADMIN_PASSWORD=<strong admin password>
 ```
 
 ### AI Service
@@ -118,109 +101,79 @@ railway init
 railway up
 ```
 
-Environment variables:
+Set in Railway dashboard:
 ```
-MONGODB_URI=your_atlas_uri
-GROQ_API_KEY=your_groq_key
+MONGODB_URI=<atlas uri>
+GROQ_API_KEY=<your key>
 ```
 
 ---
 
 ## Vercel Deployment (Frontend)
 
-### 1. Install Vercel CLI
-
 ```bash
 npm install -g vercel
-```
-
-### 2. Deploy
-
-```bash
 cd frontend
 vercel
 ```
 
-### 3. Configure Environment
-
-In Vercel dashboard:
+In the Vercel dashboard, add:
 ```
 VITE_API_URL=https://your-backend.railway.app
 ```
 
-### 4. Custom Domain (Optional)
-
-1. Go to Vercel project settings
-2. Add custom domain
-3. Update DNS records as instructed
+The project's `vercel.json` uses the modern `"framework": "vite"` config with SPA rewrites and security headers — no deprecated builders.
 
 ---
 
 ## Security Checklist
 
-### ✅ Before Going Live
+### Before Going Live
 
-- [ ] Change default JWT_SECRET
-- [ ] Enable MongoDB Atlas IP whitelist
-- [ ] Configure CORS to specific domains
-- [ ] Enable HTTPS/TLS on all services
-- [ ] Set up environment-specific configs
-- [ ] Enable MongoDB backup (Atlas)
-- [ ] Configure rate limiting
-- [ ] Review and update security headers
-- [ ] Test authentication flows
-- [ ] Verify error messages don't leak sensitive data
+- [ ] `JWT_SECRET` is a strong random value (min 32 chars)
+- [ ] `ADMIN_PASSWORD` is set and strong
+- [ ] `CORS_ORIGIN` is restricted to your production frontend domain
+- [ ] MongoDB Atlas IP whitelist is configured
+- [ ] HTTPS/TLS enabled on all public endpoints
+- [ ] All credentials rotated if previously committed to git history
+- [ ] Rate limiting configured
+- [ ] Error messages don't leak sensitive data
 
-### ✅ Monitoring Setup
+### Monitoring Setup
 
-- [ ] Set up error tracking (Sentry)
-- [ ] Configure uptime monitoring (UptimeRobot)
-- [ ] Enable application logs
-- [ ] Set up alerts for critical errors
-- [ ] Monitor API rate limits
+- [ ] Error tracking configured (Sentry)
+- [ ] Uptime monitoring configured (UptimeRobot)
+- [ ] Application logs enabled
+- [ ] Alerts set for critical errors
+- [ ] API rate limits monitored
 
 ---
 
 ## Performance Optimization
 
-### Backend
-
+**Backend:**
 ```javascript
 // Add to server.js
 import compression from 'compression';
 app.use(compression());
 ```
 
-### Database
-
-- Enable MongoDB connection pooling
-- Add appropriate indexes
+**Database:**
+- Enable MongoDB connection pooling (already configured in `config/db.js`)
 - Use projections to limit returned fields
-- Implement caching for frequently accessed data
+- Implement Redis caching for frequently accessed profile data
 
-### Frontend
-
-- Enable gzip/brotli compression
-- Use CDN for static assets
-- Implement lazy loading
-- Optimize images
+**Frontend:**
+- Vite production build includes automatic code splitting and tree shaking
+- Enable gzip/brotli on your CDN or Nginx
 
 ---
 
-## Monitoring & Logs
+## Health Check Endpoints
 
-### Application Logs
+- Backend: `GET /health` — returns `healthy` (200) or `degraded` (503)
+- AI Service: `GET /health` — returns service status and component list
 
-Logs are stored in `/logs` directory:
-- `info.log` - General application logs
-- `error.log` - Error logs
-
-### Health Check Endpoints
-
-- Backend: `GET /health`
-- AI Service: `GET /health`
-
-Response example:
 ```json
 {
   "status": "healthy",
@@ -234,111 +187,59 @@ Response example:
 
 ---
 
-## Scaling Considerations
+## Scaling
 
-### Horizontal Scaling
+The backend is stateless (JWT auth) — multiple instances can run behind a load balancer without session sharing.
 
-1. **Load Balancer**: Use Nginx or AWS ALB
-2. **Multiple Instances**: Deploy multiple backend/AI service instances
-3. **Session Management**: Use MongoDB for session storage
+The AI service is the most resource-intensive component (~2–4s per LLM call). Scale it independently.
 
-### Vertical Scaling
-
-- Start with 1GB RAM minimum
-- Scale up based on traffic:
-  - 100 users/day: 1GB
-  - 1000 users/day: 2GB
-  - 10000 users/day: 4GB+
+| Daily Users | Recommended RAM |
+|-------------|----------------|
+| < 100 | 1 GB |
+| 100–1000 | 2 GB |
+| 1000–10000 | 4 GB+ |
 
 ---
 
-## Backup Strategy
+## Database Backups
 
-### Database Backups
+```bash
+# Dump
+mongodump --uri="$MONGODB_URI" --db=elevare --out=/backups/$(date +%Y%m%d)
 
-MongoDB Atlas automatic backups:
-- Enable continuous backup
-- Set retention period (7-30 days)
-- Test restore procedure
+# Restore
+mongorestore --uri="$MONGODB_URI" --db=elevare --drop /backups/<date>/elevare
+```
 
-### Application Code
-
-- Use Git version control
-- Tag releases
-- Maintain staging environment
+MongoDB Atlas provides automatic continuous backups on paid tiers.
 
 ---
 
-## Troubleshooting
+## Rollback
 
-### Common Issues
+**Railway / Render:** Deployments tab → select previous deployment → Redeploy.
 
-**Database Connection Failed**
-```bash
-# Check connection string format
-# Verify IP whitelist in Atlas
-# Test connection:
-mongosh "mongodb+srv://..."
-```
-
-**CORS Errors**
-```bash
-# Update CORS_ORIGIN in backend .env
-# Restart backend service
-```
-
-**AI Service Timeout**
-```bash
-# Check Groq API key validity
-# Verify AI_SERVICE_URL is correct
-# Check AI service logs
-```
-
-### Debug Mode
-
-```bash
-# Backend
-LOG_LEVEL=debug npm start
-
-# AI Service
-LOG_LEVEL=DEBUG python main.py
-```
-
----
-
-## Rollback Procedure
-
-### Railway/Render
-
-1. Go to deployments tab
-2. Select previous deployment
-3. Click "Redeploy"
-
-### Vercel
-
+**Vercel:**
 ```bash
 vercel rollback
 ```
 
 ---
 
-## Support
+## Post-Deployment Checklist
 
-- Documentation: `docs/`
-- Issues: GitHub Issues
-- Email: support@elevare.com
+- [ ] All health checks return `healthy`
+- [ ] User registration and login working
+- [ ] Chat sends and receives AI responses
+- [ ] Recommendations generate after conversations
+- [ ] MongoDB backups configured
+- [ ] SSL certificate valid
+- [ ] Monitoring and alerts active
+- [ ] CORS restricted to production frontend domain
 
 ---
 
-## Post-Deployment Checklist
+## Support
 
-- [ ] All services responding to health checks
-- [ ] User registration working
-- [ ] User login working
-- [ ] Chat functionality working
-- [ ] Recommendations generating
-- [ ] MongoDB backups configured
-- [ ] Monitoring/alerts active
-- [ ] SSL certificates valid
-- [ ] Custom domain configured (if applicable)
-- [ ] Performance metrics baseline established
+- Documentation: `docs/`
+- Issues: https://github.com/Varadha9/ELEVARE/issues

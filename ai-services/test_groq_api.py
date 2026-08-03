@@ -25,7 +25,7 @@ def test_api_key():
         print("[ERROR] GROQ_API_KEY not found in .env file")
         return False
     
-    print(f"[OK] API Key found: {api_key[:20]}...")
+    print(f"[OK] API Key found: {api_key[:4]}{'*' * (len(api_key) - 8)}{api_key[-4:]}")
     print(f"[OK] Key length: {len(api_key)} characters")
     
     return True

@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 # Add parent directory to path so we can import from utils/
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -41,24 +42,28 @@ class ConversationalAgent:
         
         return response
     
+    def _sanitize(self, text: str) -> str:
+        """Strip HTML/script tags from user input before embedding in LLM context"""
+        return re.sub(r'<[^>]*>', '', str(text))
+
     def _build_context(self, message: str, nlp_analysis: dict) -> str:
         """Build enriched context string for the LLM
         
         Appends NLP metadata as structured tags so the LLM can use them
         without the user seeing them directly
         """
-        context = f"User message: {message}\n\n"
+        context = f"User message: {self._sanitize(message)}\n\n"
         
         # Add sentiment so the LLM can match the user's emotional tone
-        sentiment = nlp_analysis.get('sentiment', 'neutral')
+        sentiment = self._sanitize(nlp_analysis.get('sentiment', 'neutral'))
         emotions  = nlp_analysis.get('emotions', [])
-        keywords  = nlp_analysis.get('keywords', [])
+        keywords  = [self._sanitize(k) for k in nlp_analysis.get('keywords', [])]
         
         context += f"[Sentiment: {sentiment}]\n"
         
         # Add the dominant emotion to help the LLM respond empathetically
         if emotions:
-            context += f"[Emotion: {emotions[0]['emotion']}]\n"
+            context += f"[Emotion: {self._sanitize(emotions[0]['emotion'])}]\n"
         
         # Add key topics so the LLM can reference them in its response
         if keywords:
@@ -67,6 +72,7 @@ class ConversationalAgent:
         # Add detected traits so the LLM can acknowledge the user's strengths
         detected_traits = nlp_analysis.get('detectedTraits', {})
         if detected_traits:
-            context += f"[Traits: {', '.join(detected_traits.keys())}]\n"
+            safe_traits = [self._sanitize(t) for t in detected_traits.keys()]
+            context += f"[Traits: {', '.join(safe_traits)}]\n"
         
         return context

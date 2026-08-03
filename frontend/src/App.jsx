@@ -57,6 +57,14 @@ function TrialBanner() {
   );
 }
 
+// AdminRoute — redirects non-admin users away from admin pages
+function AdminRoute({ children }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
 // ProtectedRoute — redirects unauthenticated users to /login
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -76,7 +84,7 @@ function AnimatedRoutes() {
         <Route path="/login"    element={<ErrorBoundary><Login /></ErrorBoundary>} />
         <Route path="/register" element={<ErrorBoundary><Register /></ErrorBoundary>} />
         <Route path="/subscribe" element={<ErrorBoundary><SubscriptionWall /></ErrorBoundary>} />
-        <Route path="/admin"    element={<ProtectedRoute><ErrorBoundary><AdminDashboard /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin"    element={<AdminRoute><ErrorBoundary><AdminDashboard /></ErrorBoundary></AdminRoute>} />
 
         <Route path="/dashboard"   element={<ProtectedRoute><ErrorBoundary><Dashboard /></ErrorBoundary></ProtectedRoute>} />
         <Route path="/reflection"  element={<ProtectedRoute><ErrorBoundary><Reflection /></ErrorBoundary></ProtectedRoute>} />

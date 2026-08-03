@@ -22,7 +22,7 @@ POST /api/auth/register
 {
   "name": "Jane Doe",
   "email": "jane@example.com",
-  "password": "SecurePass1",
+  "password": "<your_password>",
   "age": 22,
   "education": "undergraduate"
 }
@@ -60,7 +60,7 @@ POST /api/auth/login
 ```json
 {
   "email": "jane@example.com",
-  "password": "SecurePass1"
+  "password": "<your_password>"
 }
 ```
 
@@ -87,10 +87,12 @@ Authorization: Bearer <token>
 **Body:**
 ```json
 {
-  "currentPassword": "OldPass1",
-  "newPassword": "NewPass1"
+  "currentPassword": "<current_password>",
+  "newPassword": "<new_password>"
 }
 ```
+
+`newPassword` must be at least 8 characters and include uppercase, lowercase, and a number.
 
 ---
 
@@ -348,7 +350,7 @@ POST /process
 **Body:**
 ```json
 {
-  "userId": "user_id",
+  "userId": "<user_id>",
   "message": "I love solving complex problems",
   "conversationHistory": [
     { "role": "user", "content": "previous message" },
@@ -368,7 +370,7 @@ POST /recommend
 **Body:**
 ```json
 {
-  "userId": "user_id"
+  "userId": "<user_id>"
 }
 ```
 
@@ -383,7 +385,7 @@ POST /feedback
 **Body:**
 ```json
 {
-  "userId": "user_id",
+  "userId": "<user_id>",
   "careerTitle": "Software Engineer",
   "interested": true,
   "rating": 4
@@ -481,7 +483,7 @@ const res = await fetch('http://localhost:5000/api/auth/register', {
   body: JSON.stringify({
     name: 'Jane Doe',
     email: 'jane@example.com',
-    password: 'SecurePass1',
+    password: '<your_password>',
     age: 22,
     education: 'undergraduate'
   })
@@ -510,7 +512,7 @@ BASE = 'http://localhost:5000/api'
 # Login
 res = requests.post(f'{BASE}/auth/login', json={
     'email': 'jane@example.com',
-    'password': 'SecurePass1'
+    'password': '<your_password>'
 })
 token = res.json()['data']['token']
 
@@ -532,12 +534,12 @@ msg = requests.post(f'{BASE}/conversations/message',
 # Register
 curl -X POST http://localhost:5000/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"name":"Jane","email":"jane@example.com","password":"SecurePass1","age":22,"education":"undergraduate"}'
+  -d '{"name":"Jane","email":"jane@example.com","password":"<your_password>","age":22,"education":"undergraduate"}'
 
 # Login and save token
 TOKEN=$(curl -s -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"jane@example.com","password":"SecurePass1"}' | jq -r '.data.token')
+  -d '{"email":"jane@example.com","password":"<your_password>"}' | jq -r '.data.token')
 
 # Get profile
 curl http://localhost:5000/api/profile \

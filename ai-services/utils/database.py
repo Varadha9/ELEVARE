@@ -1,18 +1,26 @@
-# PyMongo — official MongoDB driver for Python
 from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 import os
-# dotenv — loads environment variables from .env file
 from dotenv import load_dotenv
+import logging
 
-# Load .env so MONGODB_URI is available
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 class DatabaseManager:
     def __init__(self):
-        # Connect to MongoDB using the URI from .env
-        self.client = MongoClient(os.getenv('MONGODB_URI'))
-        # Select the 'elevare' database
-        self.db = self.client['elevare']
+        mongo_uri = os.getenv('MONGODB_URI')
+        if not mongo_uri:
+            raise RuntimeError('MONGODB_URI environment variable is not set')
+        try:
+            self.client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+            # Verify connection is reachable at startup
+            self.client.admin.command('ping')
+            self.db = self.client['elevare']
+            logger.info('\u2705 AI service connected to MongoDB')
+        except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+            logger.error(f'\u274c Failed to connect to MongoDB: {e}')
+            raise RuntimeError(f'Cannot connect to MongoDB: {e}') from e
         
     def get_user_profile(self, user_id):
         """Fetch user profile from database by userId"""

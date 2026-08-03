@@ -29,7 +29,8 @@ class Logger {
   }
 
   writeToFile(level, message) {
-    const filename = path.join(this.logDir, `${level}.log`);
+    const safeLevel = level.replace(/[^a-z]/g, '');
+    const filename = path.join(this.logDir, `${safeLevel}.log`);
     fs.appendFileSync(filename, message + '\n');
   }
 

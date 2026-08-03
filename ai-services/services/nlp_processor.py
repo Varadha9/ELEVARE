@@ -7,12 +7,14 @@ import nltk
 from textblob import TextBlob
 
 # Build path to the data directory relative to this file
-_DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
+_DATA_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'data'))
 
 # _load_json — helper to safely load JSON data files
 # Returns empty dict if the file doesn't exist (graceful degradation)
 def _load_json(filename):
-    path = os.path.join(_DATA_DIR, filename)
+    path = os.path.realpath(os.path.join(_DATA_DIR, filename))
+    if not path.startswith(_DATA_DIR + os.sep):
+        return {}
     if os.path.exists(path):
         with open(path, encoding='utf-8') as f:
             return json.load(f)
@@ -21,12 +23,16 @@ def _load_json(filename):
 class NLPProcessor:
     def __init__(self):
         # Download NLTK data if not already present
-        # punkt — tokenizer model, stopwords — common words to filter out
-        try:
-            nltk.data.find('tokenizers/punkt')
-        except LookupError:
-            nltk.download('punkt', quiet=True)
-            nltk.download('stopwords', quiet=True)
+        # punkt_tab is required by NLTK 3.9+; punkt kept for older versions
+        for resource, path in [
+            ('tokenizers/punkt',     'punkt'),
+            ('tokenizers/punkt_tab', 'punkt_tab'),
+            ('corpora/stopwords',    'stopwords'),
+        ]:
+            try:
+                nltk.data.find(resource)
+            except LookupError:
+                nltk.download(path, quiet=True)
 
         # Load emotion keyword signals from the Kaggle emotion detection dataset
         _emotion_data = _load_json('emotion_keywords.json')

@@ -19,7 +19,7 @@
 [![GitHub Forks](https://img.shields.io/github/forks/Varadha9/ELEVARE?style=social)](https://github.com/Varadha9/ELEVARE/network/members)
 [![GitHub Issues](https://img.shields.io/github/issues/Varadha9/ELEVARE)](https://github.com/Varadha9/ELEVARE/issues)
 
-[Demo](#-demo) · [Quick Start](#-quick-start) · [Documentation](#-documentation) · [Contributing](#-contributing)
+[Quick Start](#quick-start) · [Architecture](#architecture) · [API Reference](docs/API.md) · [Deployment](docs/DEPLOYMENT.md) · [Contributing](#contributing)
 
 </div>
 
@@ -27,7 +27,7 @@
 
 ## What is ELEVARE?
 
-ELEVARE replaces one-time career quizzes with **continuous behavioral analysis** through daily AI conversations. Over time, it builds a deep understanding of who you are — your personality, strengths, and values — and maps that to real career paths using the **Big Five model** and **Ikigai framework**.
+ELEVARE replaces one-time career quizzes with **continuous behavioral analysis** through daily AI conversations. Over time, it builds a deep understanding of who you are — your personality, strengths, and values — and maps that to real career paths using the **Big Five (OCEAN) model** and the **Ikigai framework**.
 
 ```
 You talk to the AI  →  AI learns your patterns  →  You get personalized career recommendations
@@ -40,15 +40,16 @@ You talk to the AI  →  AI learns your patterns  →  You get personalized care
 
 | Feature | Description |
 |---------|-------------|
-| **LLM-Powered Coach** | Groq API (Llama 3.3 70B) for natural, empathetic career conversations |
-| **Longitudinal Analysis** | Behavioral patterns tracked over time, not just a single session |
-| **Big Five Personality** | Full OCEAN model profiling with radar chart visualization |
-| **Ikigai Mapping** | Four-quadrant career framework: love, skill, need, pay |
-| **8 Behavioral Traits** | Creativity, analytical thinking, leadership, teamwork, and more |
-| **Explainable AI** | Every recommendation includes confidence score and reasoning |
-| **Real-time Dashboard** | Trait evolution, streak tracking, and progress analytics |
-| **Dark Mode** | Full dark/light theme with smooth transitions |
-| **Mobile Responsive** | Works on all screen sizes |
+| LLM-Powered Coach | Groq API (Llama 3.3 70B) for natural, empathetic career conversations |
+| Longitudinal Analysis | Behavioral patterns tracked over time using EWMA, not just a single session |
+| Big Five Personality | Full OCEAN model profiling with radar chart visualization |
+| Ikigai Mapping | Four-quadrant career framework: love, skill, need, pay |
+| 8 Behavioral Traits | Creativity, analytical thinking, leadership, teamwork, and more |
+| Explainable AI | Every recommendation includes confidence score and reasoning |
+| Real-time Dashboard | Trait evolution, streak tracking, and progress analytics |
+| Dark Mode | Full dark/light theme with smooth transitions |
+| Mobile Responsive | Works on all screen sizes |
+| Payment Integration | Razorpay subscription with HMAC-verified webhooks |
 
 ---
 
@@ -77,17 +78,19 @@ You talk to the AI  →  AI learns your patterns  →  You get personalized care
 └─────────────────────────────────────┘
 ```
 
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full system design, data flow, and security model.
+
 ---
 
 ## Tech Stack
 
 | Layer | Technologies |
 |-------|-------------|
-| **Frontend** | React 18, Vite, TailwindCSS, Framer Motion, Recharts |
-| **Backend** | Node.js, Express, JWT, Bcrypt, Helmet, express-rate-limit |
-| **AI Engine** | Python, FastAPI, Groq (Llama 3.3 70B), NLTK, TextBlob |
-| **Database** | MongoDB, Mongoose |
-| **DevOps** | Docker, Docker Compose, GitHub Actions CI/CD |
+| Frontend | React 18, Vite, TailwindCSS, Framer Motion, Recharts |
+| Backend | Node.js, Express, JWT, Bcrypt, Helmet, express-rate-limit |
+| AI Engine | Python, FastAPI, Groq (Llama 3.3 70B), NLTK, TextBlob |
+| Database | MongoDB, Mongoose |
+| DevOps | Docker, Docker Compose, GitHub Actions CI/CD |
 
 ---
 
@@ -98,7 +101,7 @@ You talk to the AI  →  AI learns your patterns  →  You get personalized care
 ```bash
 git clone https://github.com/Varadha9/ELEVARE.git
 cd ELEVARE
-cp .env.template .env   # fill in GROQ_API_KEY
+cp .env.template .env   # fill in GROQ_API_KEY and JWT_SECRET
 ./start.sh
 ```
 
@@ -127,8 +130,8 @@ Edit `.env` and set these required values:
 
 ```env
 MONGODB_URI=mongodb://localhost:27017/elevare
-JWT_SECRET=your_strong_secret_here        # openssl rand -base64 32
-GROQ_API_KEY=your_groq_api_key_here       # https://console.groq.com/keys
+JWT_SECRET=<generate: openssl rand -base64 32>
+GROQ_API_KEY=<from https://console.groq.com/keys>
 ```
 
 #### 2. Backend
@@ -149,8 +152,6 @@ source venv/bin/activate        # Linux/Mac
 # venv\Scripts\activate         # Windows
 
 pip install -r requirements.txt
-python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
-
 cp .env.example .env            # add GROQ_API_KEY
 python main.py
 ```
@@ -163,7 +164,7 @@ npm install
 npm run dev
 ```
 
-#### 5. Open in Browser
+#### 5. Service URLs
 
 | Service | URL |
 |---------|-----|
@@ -173,11 +174,49 @@ npm run dev
 
 ---
 
+## How It Works
+
+### Conversation → Analysis → Profile Update
+
+```
+User message
+    ↓
+NLP Pipeline (NLTK + TextBlob)
+  → sentiment score
+  → emotion detection
+  → keyword extraction
+  → trait signals
+    ↓
+Behavioral Analyzer (EWMA, learning rate 0.15)
+  → updates 8 trait scores (0–10)
+  → updates Big Five personality (0–1)
+  → recalculates Ikigai alignment
+    ↓
+Groq LLM (Llama 3.3 70B)
+  → generates empathetic response
+  → asks targeted follow-up question
+    ↓
+Saved to MongoDB
+```
+
+### Recommendation Scoring (Paper Eq. 8)
+
+```
+Score(c) = 0.40 × Psych(c) + 0.35 × Ikigai(c) + 0.25 × Market(c)
+```
+
+- **Psych(c)** — cosine similarity between user OCEAN vector and career OCEAN profile
+- **Ikigai(c)** — mean Jaccard similarity across all 4 Ikigai dimensions
+- **Market(c)** — growth rate (40%) + salary (35%) + LinkedIn demand (25%)
+
+---
+
 ## Project Structure
 
 ```
 ELEVARE/
 ├── backend/                    # Node.js Express API
+│   ├── controllers/            # Route handlers
 │   ├── middleware/
 │   │   ├── auth.js             # JWT middleware
 │   │   └── validators.js       # Input validation
@@ -192,25 +231,29 @@ ELEVARE/
 │       │   ├── charts/         # Recharts visualizations
 │       │   ├── layout/         # Navbar, Sidebar
 │       │   └── ui/             # Reusable components
-│       ├── pages/              # 10 pages
-│       ├── context/            # Auth state
+│       ├── pages/              # 10 pages + Admin
+│       ├── context/            # AuthContext
 │       ├── hooks/              # Custom React hooks
 │       └── services/api.js     # Axios client
 │
 ├── ai-services/                # Python AI Microservice
+│   ├── data/                   # Career, OCEAN, emotion, LinkedIn datasets
+│   ├── prompts/
+│   │   └── career_coach_prompts.py  # Dynamic system prompt builder
 │   ├── services/
-│   │   ├── nlp_processor.py       # Sentiment, emotion, keywords
-│   │   ├── behavioral_analyzer.py # Trait & Ikigai analysis (EWMA)
-│   │   ├── conversational_agent.py # Groq LLM integration
-│   │   └── recommendation_engine.py
+│   │   ├── nlp_processor.py         # Sentiment, emotion, keywords
+│   │   ├── behavioral_analyzer.py   # EWMA trait + Ikigai updates
+│   │   ├── conversational_agent.py  # Groq LLM integration
+│   │   └── recommendation_engine.py # Composite scoring
 │   ├── utils/
 │   │   └── llm_client.py       # Groq API client with retry logic
 │   └── main.py                 # FastAPI server
 │
+├── datasets/                   # Research datasets and evaluation scripts
+├── docs/                       # Full documentation
 ├── docker-compose.yml
-├── start.sh                    # One-command startup script
-├── .env.template               # All environment variables
-└── docs/                       # Full documentation
+├── start.sh                    # One-command startup
+└── .env.template               # All environment variables
 ```
 
 ---
@@ -220,9 +263,9 @@ ELEVARE/
 ### Auth
 
 ```http
-POST /api/auth/register
-POST /api/auth/login
-PUT  /api/auth/change-password
+POST   /api/auth/register
+POST   /api/auth/login
+PUT    /api/auth/change-password
 DELETE /api/auth/account
 ```
 
@@ -260,7 +303,7 @@ Full API docs → [docs/API.md](docs/API.md)
 PORT=5000
 NODE_ENV=production
 MONGODB_URI=mongodb://localhost:27017/elevare
-JWT_SECRET=your_secure_random_secret
+JWT_SECRET=<strong random secret, min 32 chars>
 JWT_EXPIRE=7d
 AI_SERVICE_URL=http://localhost:8000
 CORS_ORIGIN=http://localhost:3000
@@ -271,7 +314,7 @@ RATE_LIMIT_MAX_REQUESTS=100
 
 ```env
 MONGODB_URI=mongodb://localhost:27017/elevare
-GROQ_API_KEY=your_groq_api_key
+GROQ_API_KEY=<your Groq API key>
 AI_SERVICE_PORT=8000
 ```
 
@@ -279,36 +322,19 @@ Get a free Groq API key → [console.groq.com/keys](https://console.groq.com/key
 
 ---
 
-## How It Works
+## Security
 
-### Conversation → Analysis → Profile Update
-
-```
-User message
-    ↓
-NLP Pipeline (NLTK + TextBlob)
-  → sentiment score
-  → emotion detection
-  → keyword extraction
-  → trait signals
-    ↓
-Behavioral Analyzer (EWMA)
-  → updates 8 trait scores
-  → updates Big Five personality
-  → recalculates Ikigai alignment
-    ↓
-Groq LLM (Llama 3.3 70B)
-  → generates empathetic response
-  → asks targeted follow-up question
-    ↓
-Saved to MongoDB
-```
-
-### Recommendation Scoring
-
-```
-Confidence Score = (trait match × 0.4) + (personality fit × 0.3) + (ikigai alignment × 0.3)
-```
+- JWT authentication with configurable expiry
+- Bcrypt password hashing (12 rounds)
+- Helmet security headers (CSP, HSTS, X-Frame-Options)
+- MongoDB input sanitization (NoSQL injection prevention)
+- Rate limiting — global (100/15min) + auth endpoints (10/15min)
+- CORS whitelist configuration
+- Input validation on all endpoints (express-validator)
+- Path traversal protection on all file reads
+- HTML sanitization on user input before LLM context embedding
+- Startup guards — server refuses to start with missing/weak secrets
+- Razorpay webhook HMAC verification on raw request body
 
 ---
 
@@ -337,7 +363,7 @@ curl http://localhost:8000/health
 | AI Service | [Railway](https://railway.app) / [Fly.io](https://fly.io) |
 | Database | [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) |
 
-Full deployment guide → [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md)
+Full deployment guide → [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 ---
 
@@ -345,22 +371,10 @@ Full deployment guide → [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md)
 
 | Collection | Purpose |
 |------------|---------|
-| `users` | Authentication, basic info |
+| `users` | Authentication, basic info, role |
 | `userprofiles` | Behavioral traits, personality, Ikigai |
 | `conversations` | Chat history with NLP analysis |
 | `recommendations` | Career suggestions with confidence scores |
-
----
-
-## Security
-
-- JWT authentication with configurable expiry
-- Bcrypt password hashing (12 rounds)
-- Helmet security headers
-- MongoDB input sanitization
-- Rate limiting — global (100/15min) + auth endpoints (10/15min)
-- CORS whitelist configuration
-- Input validation on all endpoints (express-validator)
 
 ---
 
@@ -369,10 +383,11 @@ Full deployment guide → [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md)
 | Document | Description |
 |----------|-------------|
 | [API Reference](docs/API.md) | Complete API endpoint documentation |
-| [Architecture](docs/ARCHITECTURE.md) | System design and data flow |
+| [Architecture](docs/ARCHITECTURE.md) | System design, data flow, security model |
 | [Installation](docs/INSTALLATION.md) | Detailed setup guide |
 | [Deployment](docs/DEPLOYMENT.md) | Production deployment guide |
 | [LLM Integration](docs/LLM_INTEGRATION.md) | Groq API integration details |
+| [Project Overview](docs/PROJECT_OVERVIEW.md) | Research foundation and roadmap |
 | [Troubleshooting](TROUBLESHOOTING.md) | Common issues and fixes |
 | [Contributing](CONTRIBUTING.md) | How to contribute |
 | [Changelog](CHANGELOG.md) | Version history |
@@ -412,5 +427,33 @@ Built with ❤️ for students discovering their career path
 ⭐ Star this repo if ELEVARE helps you!
 
 **Author:** [Varadha](https://github.com/Varadha9)
+
+---
+
+## Citation
+
+If you use ELEVARE in your research, please cite:
+
+```bibtex
+@article{shinde2025elevare,
+  title   = {An NLP-Driven Ikigai-Based Career Recommendation Model
+             Using Psychometric and Market Data},
+  author  = {Shinde, Tanmay and Poonawala, Ibrahim and
+             Mandhare, Varad Vikas and Bhujbal, Pallavi},
+  journal = {IEEE Access},
+  year    = {2025},
+  url     = {https://github.com/Varadha9/ELEVARE}
+}
+```
+
+See also [`CITATION.cff`](CITATION.cff) for machine-readable citation metadata.
+
+## Reproducing Paper Results
+
+```bash
+bash reproduce_experiments.sh
+```
+
+Reproduces Tables VIII, XI, and XIV from the paper (~5–10 min, no GPU needed).
 
 </div>

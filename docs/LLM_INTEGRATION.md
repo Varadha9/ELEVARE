@@ -1,368 +1,113 @@
-# 🚀 ELEVARE AI Upgrade - LLM Integration
+# LLM Integration
 
-## ✅ Upgrade Complete
-
-Your ELEVARE AI system has been upgraded from rule-based to **LLM-powered Career Coach** using **Groq API**.
+ELEVARE uses the **Groq API** (Llama 3.3 70B) for all conversational AI. This document covers the integration architecture, configuration, and how the LLM fits into the broader NLP pipeline.
 
 ---
 
-## 🎯 What Changed
+## How It Works
 
-### ✨ New Files Created:
-- `ai-services/utils/llm_client.py` - Groq API client
-- `ai-services/prompts/career_coach_prompts.py` - System prompts
-- `ai-services/services/conversational_agent.py` - Upgraded (LLM-powered)
-- `ai-services/test_llm_integration.py` - Test script
-
-### 🔧 Modified Files:
-- `ai-services/main.py` - Updated to pass user profile
-- `ai-services/requirements.txt` - Added requests library
-- `ai-services/.env` - Added GROQ_API_KEY
-
-### ✅ Unchanged:
-- Frontend (React)
-- Backend (Node.js)
-- Database (MongoDB)
-- NLP Processor (NLTK, TextBlob)
-- Behavioral Analyzer
-- Recommendation Engine
-
----
-
-## 🚀 How It Works Now
-
-### Hybrid AI Pipeline:
+Every user message goes through a hybrid pipeline:
 
 ```
 User Message
     ↓
 1. NLP Analysis (NLTK + TextBlob)
-   - Keywords, Sentiment, Emotions, Traits
+   → keywords, sentiment, emotions, trait signals
     ↓
-2. Context Building
-   - User profile, Conversation history, NLP insights
+2. Input Sanitization
+   → HTML/script tags stripped before embedding in LLM context
     ↓
-3. LLM Generation (Groq - Llama 3.3 70B)
-   - Career Coach prompt
-   - Intelligent, contextual response
+3. Context Building
+   → user profile + conversation history + NLP insights
     ↓
-4. Response + Trait Updates
-   - Save to MongoDB
+4. LLM Generation (Groq — Llama 3.3 70B)
+   → career coach system prompt
+   → empathetic, context-aware response
+    ↓
+5. Response + Trait Updates saved to MongoDB
 ```
+
+The LLM never receives raw user input directly — it receives a structured context string built by `ConversationalAgent._build_context()` after sanitization.
 
 ---
 
-## 🧠 AI Capabilities
+## Configuration
 
-### Before (Rule-Based):
-❌ Generic responses  
-❌ Limited context  
-❌ Repetitive questions  
-
-### After (LLM-Powered):
-✅ Intelligent, personalized responses  
-✅ Context-aware conversations  
-✅ Reflective, mentor-like questions  
-✅ Emotional intelligence  
-✅ Career guidance with reasoning  
-
----
-
-## 🎭 Career Coach Personality
-
-The AI now acts as **ELEVARE Career Coach** with:
-
-### Traits:
-- Empathetic and supportive
-- Thoughtful and reflective
-- Motivational and encouraging
-- Professional yet warm
-
-### Conversation Style:
-- Asks ONE focused question at a time
-- Builds on previous responses
-- Acknowledges emotions
-- Connects insights to careers
-- Avoids generic advice
-
-### Question Examples:
-- "What kind of problems do you enjoy solving?"
-- "When do you feel most energized?"
-- "What activities make you lose track of time?"
-- "Do you prefer working independently or collaboratively?"
-
----
-
-## 📊 Trait Analysis
-
-The system tracks **8 behavioral traits**:
-
-1. **Creativity** - Innovative thinking, artistic expression
-2. **Analytical Thinking** - Logic, data, problem-solving
-3. **Leadership** - Organizing, guiding, decision-making
-4. **Communication** - Expressing ideas, listening
-5. **Empathy** - Understanding others, helping
-6. **Curiosity** - Learning, exploring, questioning
-7. **Discipline** - Planning, consistency, responsibility
-8. **Risk-Taking** - Trying new things, embracing challenges
-
-### How Traits Are Extracted:
-- NLP keyword matching (existing)
-- Sentiment analysis
-- Conversation patterns
-- LLM context understanding
-
-### Trait Updates:
-- Continuous learning (exponential moving average)
-- Learning rate: 0.15
-- Range: 0-100
-
----
-
-## 🎯 Career Recommendations
-
-### Ikigai Framework:
-1. What you **LOVE** (passion)
-2. What you're **GOOD AT** (talent)
-3. What the world **NEEDS** (mission)
-4. What you can be **PAID FOR** (profession)
-
-### Recommendation Algorithm:
-```
-Confidence Score = 
-  Trait Match (40%) +
-  Personality Fit (30%) +
-  Ikigai Alignment (30%)
-```
-
-### Each Recommendation Includes:
-- Career name
-- Confidence score (%)
-- Why it matches (personalized)
-- Skills to develop
-- Growth opportunities
-- Actionable next steps
-
----
-
-## 🧪 Testing
-
-### Test LLM Integration:
-```bash
-cd ai-services
-python test_llm_integration.py
-```
-
-### Expected Output:
-```
-[TEST 1] Testing LLM Connection
-  ✅ API Key: gsk_cah52hwp8W0zerb...
-  ✅ Model: llama-3.3-70b-versatile
-
-[TEST 2] Testing Simple Response
-  📝 User: I really enjoy solving complex coding problems
-  🤖 AI: [Intelligent, contextual response]
-  ✅ [SUCCESS] LLM response generated!
-
-[TEST 3] Testing With Conversation History
-  🤖 AI: [Context-aware follow-up question]
-  ✅ [SUCCESS] Context-aware response generated!
-
-[TEST 4] Testing Full Pipeline (NLP + LLM)
-  🔍 NLP Analysis:
-    Sentiment: positive
-    Keywords: coding, problems, solving
-    Detected Traits: analytical, creativity
-  🤖 AI: [Personalized response with trait insights]
-  ✅ [SUCCESS] Full pipeline working!
-
-📊 Results: 4/4 tests passed
-🎉 All tests passed! LLM integration is working perfectly!
-```
-
----
-
-## 🔧 Configuration
-
-### Environment Variables:
 ```env
-GROQ_API_KEY=your_groq_api_key_here
-MONGODB_URI=mongodb://localhost:27017/elevare
-AI_SERVICE_PORT=8000
+# ai-services/.env
+GROQ_API_KEY=<your key from https://console.groq.com/keys>
 ```
 
-### LLM Settings:
-- **Model**: llama-3.3-70b-versatile
-- **Max Tokens**: 500
-- **Temperature**: 0.7 (balanced creativity)
-- **Context Window**: Last 5 messages
+LLM settings (in `utils/llm_client.py`):
+
+| Setting | Value | Notes |
+|---------|-------|-------|
+| Model | `llama-3.3-70b-versatile` | Fast, high-quality |
+| Max tokens | 500 | Keeps responses focused |
+| Temperature | 0.7 | Balanced creativity |
+| Context window | Last 5 turns | Prevents token bloat |
+| Retry attempts | 3 | Exponential backoff |
 
 ---
 
-## 📈 Performance
+## System Prompt
 
-### Response Time:
-- NLP Analysis: < 1s
-- LLM Generation: 2-4s
-- **Total**: 3-5s per message
+The system prompt is built dynamically by `prompts/career_coach_prompts.py` based on the user's current profile. It instructs the LLM to:
 
-### API Costs (Groq):
-- **Free tier**: 30 requests/minute
-- **Paid tier**: Higher limits
-- Cost-effective compared to OpenAI
+- Act as an empathetic career coach named ELEVARE
+- Ask **one focused question at a time**
+- Build on previous responses and detected traits
+- Connect conversation insights to career paths
+- Avoid generic advice
 
-### Accuracy:
-- Trait detection: Hybrid (keyword + LLM)
-- Conversation quality: Significantly improved
-- User satisfaction: Expected to increase
+After 3+ conversations, the prompt includes the user's top career matches to guide the conversation toward actionable guidance.
 
 ---
 
-## 🚀 Deployment
+## Groq API Client (`utils/llm_client.py`)
 
-### Start AI Service:
-```bash
-cd ai-services
-python main.py
+```python
+client = GroqLLMClient()
+response = client.generate_response(
+    system_prompt=system_prompt,
+    user_message=enhanced_context,
+    conversation_history=last_5_turns,
+    temperature=0.7
+)
 ```
 
-### Start Full Stack:
-```bash
-cd D:\ELEVARE
-launch-elevare.bat
-```
-
-### Access:
-- **Frontend**: http://localhost:3000
-- **Backend**: http://localhost:5000
-- **AI Service**: http://localhost:8000
+The client:
+- Reads `GROQ_API_KEY` from environment (never hardcoded)
+- Retries up to 3 times with exponential backoff on transient errors
+- Returns a fallback string if all retries fail, so the backend never returns a 500 to the user
 
 ---
 
-## 🔐 Security
+## Groq API Reference
 
-✅ API key stored in .env  
-✅ Not committed to Git  
-✅ Server-side only (not exposed to frontend)  
-✅ Rate limiting on Groq API  
-✅ Error handling with fallbacks  
+**Endpoint:** `POST https://api.groq.com/openai/v1/chat/completions`
 
----
-
-## 📝 Example Conversation
-
-### User: 
-"I really enjoy solving complex coding problems"
-
-### AI (Before - Rule-Based): 
-"That's interesting. Do you enjoy logical problem solving often?"
-
-### AI (After - LLM-Powered): 
-"It sounds like you have a strong passion for coding and software development, which can be a great source of motivation and fulfillment. Your ability to enjoy solving complex problems suggests that you might have strong analytical thinking skills, which are highly valued in the tech industry. What kind of coding projects or challenges do you find most exciting and engaging, and how do you think they align with your long-term career goals?"
-
----
-
-## 🎯 Next Steps
-
-### ✅ Immediate:
-- [x] Test LLM integration
-- [x] Verify API key works
-- [ ] Test full conversation flow
-- [ ] Monitor API usage
-
-### 📅 Short-term:
-- [ ] Fine-tune system prompts
-- [ ] Add more conversation examples
-- [ ] Implement conversation stages
-- [ ] Add LLM-based trait validation
-
-### 🚀 Long-term:
-- [ ] Multi-language support
-- [ ] Voice conversation
-- [ ] Advanced personality analysis
-- [ ] Career path visualization
-
----
-
-## 🐛 Troubleshooting
-
-### LLM Not Responding:
-1. Check API key in `.env`
-2. Verify internet connection
-3. Check Groq API status
-4. Review error logs
-
-### Slow Responses:
-- Normal (LLM takes 2-4s)
-- Check network latency
-- Consider caching common responses
-
-### Generic Responses:
-- Ensure user profile is passed
-- Check conversation history
-- Verify system prompt is loaded
-
----
-
-## 📊 Monitoring
-
-### Track These Metrics:
-- Response time
-- API call success rate
-- User satisfaction
-- Conversation length
-- Trait detection accuracy
-- Career recommendation relevance
-
----
-
-## 🎉 Success!
-
-Your **ELEVARE AI** is now a **Career Coach** powered by **Groq LLM**!
-
-### Key Improvements:
-🧠 Intelligent conversations  
-💬 Context-aware responses  
-🎯 Personalized guidance  
-📈 Better trait analysis  
-🚀 Professional career coaching  
-
-### Test it now:
-```bash
-cd ai-services
-python test_llm_integration.py
-```
-
----
-
-## 📚 API Reference
-
-### Groq API Endpoint:
-```
-POST https://api.groq.com/openai/v1/chat/completions
-```
-
-### Request Format:
+**Request:**
 ```json
 {
   "model": "llama-3.3-70b-versatile",
   "messages": [
     {"role": "system", "content": "You are ELEVARE Career Coach..."},
-    {"role": "user", "content": "I enjoy coding"}
+    {"role": "user", "content": "I enjoy solving coding problems"}
   ],
   "max_tokens": 500,
   "temperature": 0.7
 }
 ```
 
-### Response Format:
+**Response:**
 ```json
 {
   "choices": [
     {
       "message": {
         "role": "assistant",
-        "content": "That's great! What kind of coding..."
+        "content": "That's great! What kind of coding challenges do you find most engaging?"
       }
     }
   ]
@@ -371,14 +116,74 @@ POST https://api.groq.com/openai/v1/chat/completions
 
 ---
 
-## 🔗 Resources
+## Performance
 
-- **Groq API Docs**: https://console.groq.com/docs
-- **Llama 3.3 Model**: https://www.llama.com/
-- **ELEVARE GitHub**: https://github.com/Varadha9/ELEVARE
+| Step | Typical Time |
+|------|-------------|
+| NLP analysis | < 100ms |
+| LLM generation | 2–4s |
+| Total per message | 2–5s |
+
+Groq's inference is significantly faster than OpenAI for the same model size, making it well-suited for interactive chat.
 
 ---
 
-**Built with ❤️ using Groq API (Llama 3.3 70B)**
+## Groq API Limits
 
-© 2024 ELEVARE Project
+| Tier | Requests/min | Notes |
+|------|-------------|-------|
+| Free | 30 req/min | Sufficient for development and small deployments |
+| Paid | Higher limits | Pay-per-token pricing |
+
+Current pricing: ~$0.59 / 1M input tokens · ~$0.79 / 1M output tokens
+
+Get a free API key: https://console.groq.com/keys
+
+---
+
+## Security
+
+- API key is stored only in `ai-services/.env` — never committed to git, never sent to the frontend
+- `ai-services/.dockerignore` excludes `.env` from Docker images
+- User input is sanitized (HTML tags stripped) before being embedded in the LLM context string
+
+---
+
+## Testing
+
+```bash
+cd ai-services
+source venv/bin/activate
+python test_groq_api.py
+```
+
+This validates the API key is present and makes a test request. The key is masked in output (only first 4 and last 4 characters shown).
+
+```bash
+python test_llm_integration.py
+```
+
+Runs a full pipeline test: NLP analysis → context building → LLM generation.
+
+---
+
+## Fallback Behavior
+
+If the Groq API is unavailable or all retries fail:
+1. The AI service returns a generic encouraging response
+2. NLP analysis and trait updates still proceed normally
+3. The backend logs the error but returns a 200 to the frontend
+
+This ensures the app remains usable even during LLM outages.
+
+---
+
+## Troubleshooting
+
+**`GROQ_API_KEY not found`** — Add the key to `ai-services/.env` and restart the AI service.
+
+**Slow responses (> 10s)** — Check your network latency to Groq's servers. Normal response time is 2–4s.
+
+**Generic / repetitive responses** — Ensure the user profile is being passed correctly. Check that `main.py` is fetching the user profile from MongoDB before calling `ConversationalAgent.generate_response()`.
+
+**`LLM Error` in logs** — Verify the API key is valid at https://console.groq.com/keys. Check if you've hit the rate limit.

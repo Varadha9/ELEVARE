@@ -2,11 +2,13 @@ import math
 import json
 import os
 
-_DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
+_DATA_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'data'))
 
 # _load_json — safely loads JSON data files, returns empty dict if missing
 def _load_json(filename):
-    path = os.path.join(_DATA_DIR, filename)
+    path = os.path.realpath(os.path.join(_DATA_DIR, filename))
+    if not path.startswith(_DATA_DIR + os.sep):
+        return {}
     if os.path.exists(path):
         with open(path, encoding='utf-8') as f:
             return json.load(f)
@@ -43,8 +45,9 @@ class RecommendationEngine:
 
     # ------------------------------------------------------------------
     # Paper Eq. (9): Psych(c) — psychometric match score
-    # Blends hand-coded career personality profile 50/50 with data-driven
-    # OCEAN profiles derived from career_prediction.csv
+    # Uses hand-coded OCEAN profiles only (rho=0.0) — ablation study
+    # (Table VIII) showed monotonic degradation as Kaggle blend increases,
+    # because the dataset provides only one sample per career (zero variance).
     # ------------------------------------------------------------------
     def calculate_psychometric_match(self, user_personality, career_personality, career_title=''):
         keys = ['openness', 'conscientiousness', 'extraversion', 'agreeableness', 'neuroticism']
@@ -52,16 +55,7 @@ class RecommendationEngine:
         # User OCEAN vector (0-1 scale)
         u = [float(user_personality.get(k, 0.5)) for k in keys]
         # Hand-coded career OCEAN vector (normalized from 0-100 to 0-1)
-        c_coded = [float(career_personality.get(k, 50)) / 100.0 for k in keys]
-
-        # Blend with data-driven profile if available
-        dp = self._ocean_profiles.get(career_title, {})
-        if dp:
-            c_data = [float(dp.get(k, {}).get('mean', c_coded[i] * 10)) / 10.0
-                      for i, k in enumerate(keys)]
-            c = [(c_coded[i] + c_data[i]) / 2.0 for i in range(len(keys))]
-        else:
-            c = c_coded
+        c = [float(career_personality.get(k, 50)) / 100.0 for k in keys]
 
         return self.cosine_similarity(u, c)
 
